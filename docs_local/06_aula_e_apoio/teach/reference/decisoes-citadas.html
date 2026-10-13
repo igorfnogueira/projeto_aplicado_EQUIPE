@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referência — Decisões citadas nas lições</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .paper { border: 1px solid var(--rule); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; scroll-margin-top: 1.5rem; }
+  .paper h3 { margin-top: 0; color: var(--ink); }
+  .paper .meta { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.5rem; }
+  .paper:target { border-color: var(--accent); background: color-mix(in srgb, var(--bg) 92%, var(--accent) 8%); }
+</style>
+</head>
+<body>
+
+<div class="kicker">Referência · Defesa do TCC — TDS/LAGWRP</div>
+<h1>Decisões citadas nas lições</h1>
+<p class="lead">As 19 decisões (de ~64 registradas no projeto) que as lições deste workspace efetivamente citam, condensadas aqui para que esta pasta seja autocontida — quem recebe só a pasta <code>teach/</code> não precisa do log completo pra entender o que cada <span class="dcode">D-NN</span> significa. Isto é um extrato, não o log ADR inteiro: as ~45 decisões restantes (infraestrutura interna, incidentes de processo, decisões de escopo não citadas em nenhuma lição) ficam só em <code>docs_local/01_manuscrito/Artigo/DECISOES.md</code>, fora deste pacote.</p>
+
+<div class="paper" id="D-12">
+  <h3><span class="dcode">D-12</span> — Reconstrução da vazão do efluente validada</h3>
+  <p>O dataset não traz vazão diretamente, só o mesmo parâmetro em mg/L e lb/dia. Decisão: reconstruir a vazão via <code>vazão(MGD) = lb/dia ÷ (mg/L × 8,34)</code>. Validação forte: a vazão derivada independentemente de TDS e de Cloreto bate quase exatamente (9,4863 vs. 9,4877 MGD de média, diferença de 0,015%) — 0 pontos fora da faixa fisicamente possível.</p>
+  <p class="source">Lições: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>, <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>.</p>
+</div>
+
+<div class="paper" id="D-13">
+  <h3><span class="dcode">D-13</span> — A quebra EFF-001→EFF-001A é artefato de modelagem, não degrau real</h3>
+  <p>Um modelo com termo de degrau estimou +137 mg/L na troca de código de monitoramento, ameaçando invalidar a tendência. Investigação: a transição é contínua mês a mês (mesmo método analítico, mesmo MDL — <em>Method Detection Limit</em>, limite de detecção —, mesma coordenada) — o "degrau" era efeito de forçar uma reta única sobre uma série cíclica, não monotônica. Achado colateral crítico: a tendência desaparece quando calculada só pós-2012 (0,84 mg/L/ano, p=0,59, não significativo, contra 3,91 mg/L/ano/p=0,0056 na série completa).</p>
+  <p class="source">Lições: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>, <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>, <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>.</p>
+</div>
+
+<div class="paper" id="D-14">
+  <h3><span class="dcode">D-14</span> — Reenquadramento: padrão cíclico por regime, não tendência monotônica</h3>
+  <p>A investigação de D-13 revelou estrutura por período, não inclinação constante: 2011 (563 mg/L) → alta até 2015 (+46%, coincide com a seca 2012-2016) → queda até 2019 (−21%) → alta até 2022 (+21%, segunda seca) → recuo. Decisão: reformular o projeto em torno de regime/ciclo ligado a seca (PDSI), não conservação isolada — confirmado quantitativamente em D-37.</p>
+  <p class="source">Lições: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>, <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>, <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>, <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-15">
+  <h3><span class="dcode">D-15</span> — Correção de autocorrelação no Mann-Kendall (maior impacto metodológico)</h3>
+  <p>A significância da tendência <strong>inverte</strong> conforme a correção de autocorrelação adotada: significativa sob MK simples (p=0,0056), TFPW (p=0,00014) e Seasonal Kendall (p=0,0038); não significativa sob Hamed-Rao (p=0,182) e pre-whitening simples (p=0,417) — mesmo slope (~3,9 mg/L/ano) nos 5 casos. Decisão: reportar as 5 variantes lado a lado no artigo, em vez de escolher uma só para sustentar a conclusão.</p>
+  <p class="source">Lição: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>.</p>
+</div>
+
+<div class="paper" id="D-31">
+  <h3><span class="dcode">D-31</span> — Confirmação de D-14 (regime cíclico), com ressalva importante</h3>
+  <p>A vazão reconstruída correlaciona com o TDS no sinal esperado (mensal r=−0,373, p&lt;0,001; anual r=−0,552, p=0,027) e os dois grandes picos de TDS caem dentro das duas secas oficiais — alinhamento de regime real. Mas a vazão não replica o formato fino da série: entre 2016-2017 ficou estável enquanto o TDS caiu de forma acentuada — a hipótese pura de diluição não explica tudo sozinha (consistente com D-29/D-30: a maior parte da variância viria do TDS de origem, fora do dataset).</p>
+  <p class="source">Lição: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>.</p>
+</div>
+
+<div class="paper" id="D-35">
+  <h3><span class="dcode">D-35</span> — Critério de escolha dos 3 finalistas na síntese</h3>
+  <p>Finalistas: regressão bayesiana (única com incerteza genuinamente honesta e crescente, propriedade estrutural); Detrend+RF (melhor MASE de holdout, 0,4408, entre os métodos que capturam tendência sem saturar, único sem autocorrelação/heterocedasticidade residual significativa); híbrido SARIMA+Prophet (melhor RMSE de holdout, 46,40, entre métodos de série temporal, IC mais largo = cenário mais cauteloso). Nenhum método vence em todos os critérios — por isso 3 finalistas complementares, não um vencedor único.</p>
+  <p class="source">Lições: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</p>
+</div>
+
+<div class="paper" id="D-37">
+  <h3><span class="dcode">D-37</span> — Os ciclos de TDS são explicados por ciclos de seca (PDSI) ⭐ confirma D-14</h3>
+  <p>Testado contra o PDSI (NOAA NCEI, 3 séries regionais), uma variável de seca independente nunca calculada a partir do TDS. Correlação com defasagem: r=−0,65 (California estadual, lag=4m, p=0,0003). Changepoints do PDSI, detectados às cegas das datas do TDS, batem as 4 viradas de regime dentro de 3-10 meses. Decomposição LMG (Lindeman-Merenda-Gold): o PDSI explica 67,5-79,3% da variância (mesma ordem de grandeza do benchmark da literatura, D-29, ~88%). Ressalva honesta: a correlação sobre séries destendenciadas cai e inverte de sinal — é uma relação de nível/regime, não sincronia fina mês a mês.</p>
+  <p class="source">Lições: <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>, <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-39">
+  <h3><span class="dcode">D-39</span> — WRTDS confirma: não há tendência de TDS depois de descontar a vazão</h3>
+  <p>Implementação própria (não o pacote EGRET, sem equivalente Python maduro) de regressão ponderada localmente de log(TDS) sobre tempo, log(vazão) e sazonalidade. Tendência bruta: +0,582%/ano (p=0,0056, significativa) → tendência <em>flow-normalized</em>: −0,133%/ano (p=0,064, <strong>não significativa</strong>). Quase toda a tendência aparente desaparece ao descontar vazão. Checagem de circularidade (vazão derivada do Cloreto, independente do TDS) confirma a mesma conclusão.</p>
+  <p class="source">Lições: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>, <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-40">
+  <h3><span class="dcode">D-40</span> — Balanço de massa confirma diluição, não mais sal</h3>
+  <p>Carga de sal (lb/dia, direto do CSV) cai −3,20%/ano (p&lt;0,0001); vazão (via Cloreto, independente) cai −3,85%/ano (p&lt;0,0001) — mecanismo de diluição confirmado. Validação histórica não-circular: TDS derivado de carga÷vazão vs. observado, R²=0,941. Achado negativo registrado: a extrapolação linear desses componentes por 20 anos cruza valores fisicamente implausíveis (vazão projetada fica negativa) — por isso D-41 substitui a extrapolação por cenários.</p>
+  <p class="source">Lições: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>, <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>, <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-45">
+  <h3><span class="dcode">D-45</span> — Espaço de estados/DLM: tendência variável, sem ganho sobre a bateria existente</h3>
+  <p><code>statsmodels.UnobservedComponents</code>, <em>local linear trend</em> + sazonal (AIC vence sobre <em>local level</em>). A variância do estado de tendência ficou ~0 (2×10⁻⁹, p=1,000) — mesmo podendo variar no tempo, o ajuste convergiu pra uma inclinação efetivamente constante. Holdout não bate o naive (MASE 0,52 vs. 0,44). IC90 em +20a é o mais largo de toda a bateria ([−36,8, 1773,6]) — honesto sobre a incerteza de extrapolar sem evidência de tendência variável.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-46">
+  <h3><span class="dcode">D-46</span> — GAM: patologia de extrapolação sob GCV irrestrito, corrigida com piso no lambda</h3>
+  <p>Minimizar GCV sem restrição escolhe λ≈0,001 e produz extrapolação explosiva (1.910 mg/L em +10a, quase 3× o último valor observado) — patologia conhecida de P-splines. Corrigido com piso λ≥1,0 (ainda escolhido por GCV dentro da faixa): previsão +10a cai para 576,5 mg/L, com leve tendência de queda no longo prazo.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-47">
+  <h3><span class="dcode">D-47</span> — Regressão quantílica: os picos (P90) NÃO sobem mais rápido que a mediana</h3>
+  <p>Direção oposta à hipótese de trabalho: Q10 sobe (+4,36 mg/L/ano, p=0,016), Q50 sobe fraco (+3,49, p=0,077), <strong>Q90 cai</strong> (−3,05 mg/L/ano, p=0,026, significativo e de sinal negativo). Os picos de TDS não sobem mais rápido que a mediana — pelo contrário. Como os 3 quantis são ajustados independentemente, a extrapolação cruza em +20a (Q90 abaixo de Q50) — limitação estrutural declarada, não corrigida por reordenação artificial.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-48">
+  <h3><span class="dcode">D-48</span> — Análise de intervenção/ARIMAX: seca não significativa controlando pela ordem de conservação</h3>
+  <p>SARIMAX com 2 regressores de evento (seca 2012-2016, ordem de conservação 2015): coeficiente da seca +48,58 mg/L, <strong>não significativo</strong> (p=0,206) controlando pela ordem de conservação (+92,82 mg/L, p=0,051, no limiar). Achado técnico: o termo sazonal MA convergiu para o limite do espaço admissível (instabilidade de estimação) — os coeficientes dos eventos continuam interpretáveis, mas essa componente específica pede cautela.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-49">
+  <h3><span class="dcode">D-49</span> — Modelo fundacional zero-shot: Chronos-Bolt não supera o naive</h3>
+  <p>Expectativa declarada antes de rodar (improvável superar métodos clássicos com ~180 pontos) confirmada: holdout MASE=0,59, não bate o naive (0,44). Achado técnico contra-intuitivo: a largura do intervalo <strong>diminui</strong> com o horizonte (216,7 mg/L em +10a → 137,8 em +20a) — propriedade de cabeças de previsão multi-horizonte diretas, não erro de implementação.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-51">
+  <h3><span class="dcode">D-51</span> — Cenário climático fundamentado em projeção real (Cal-Adapt, RCP 8.5 — <em>Representative Concentration Pathway</em>, cenário de emissões do IPCC)</h3>
+  <p>5º cenário complementando os 4 históricos: calibração empírica (PDSI anual regredido contra anomalia de precipitação, R²=0,642) aplicada a 2 GeoTIFFs reais do Cal-Adapt (ensemble de 32 modelos LOCA-downscaled) no ponto exato da LAGWRP. Precipitação projetada cai só −2,3% sob RCP 8.5 — mudança modesta, resultando num "PDSI-alvo implícito" de −0,69, entre os cenários "normal" e "seco". Faixa resultante (662-670 mg/L em +20a) cai entre os cenários já existentes, sem contradizê-los.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-54">
+  <h3><span class="dcode">D-54</span> — Correlação forte entre TDS de origem (LADWP) e TDS de efluente da LAGWRP</h3>
+  <p>21 relatórios anuais de qualidade da água da LADWP (2004-2024) tabulados e <strong>100% verificados célula a célula</strong> contra o PDF original (zero discrepâncias). TDS de origem ponderado por fonte (Aqueduct/MWD/subterrânea) correlaciona com o TDS de efluente da LAGWRP: r=0,912 (p=0,000005, n=14 anos) — muito mais forte que a correlação já obtida com PDSI (D-37). Limitação: correlação anual, não mensal; peso da MWD é média simples das 3 ETAs, não o peso real publicado.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-56">
+  <h3><span class="dcode">D-56</span> — Bateria original re-treinada com PDSI como covariável climática</h3>
+  <p>12 dos 21 métodos originais que aceitam regressor exógeno re-treinados com o PDSI (lag 4 meses, mesmo de D-37) como covariável, sem alterar as linhas originais (linhas novas com sufixo <code>_com_pdsi</code>). Resultado: <strong>sem melhora consistente</strong> — 4 de 12 melhoraram o RMSE de holdout (XGBoost −13,8%, regressão quantílica Q50 −26,6%, Random Forest −2,5%, LightGBM −1,5%), os outros 8 pioraram (alguns bastante, ex. Prophet +18,5%).</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-57">
+  <h3><span class="dcode">D-57</span> — Fine-tuning da representação do PDSI para os 4 métodos que melhoraram em D-56</h3>
+  <p>Testado se múltiplos lags de PDSI simultâneos (árvores) ou seleção do melhor lag por CV (regressão quantílica) melhoram ainda mais os 4 métodos que ganharam em D-56. Critério de aceitação: melhora no holdout <strong>e</strong> na CV expansiva (não só holdout isolado). Resultado: <strong>só o XGBoost melhorou de fato</strong> (holdout −5,3%, CV −2,0%); Random Forest e LightGBM pioraram nas duas métricas; a regressão quantílica confirmou que o lag de 4 meses de D-37 já era o ótimo entre 6 candidatos testados.</p>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="D-64">
+  <h3><span class="dcode">D-64</span> — Cobertura de IC90 da regressão bayesiana + correção da contagem de métodos</h3>
+  <p>Achado da skill <code>revisao-academica</code> (2026-10-12): a cobertura empírica de IC90 da regressão bayesiana nunca tinha sido testada (reusava o resíduo do OLS por decisão de escopo de <code>script_14</code>, válida só para os itens de erro pontual, não para a largura do IC). Testada por NUTS completo (mesma construção da previsão final): 86,7% via CV expansiva — a mais próxima do nominal de 90% em toda a bateria — caindo para 66,7%/45,5% no backtest 36m/60m. Também corrigida a contagem de métodos na Conclusão do artigo (8→9, incluindo SVR, alinhado com D-50).</p>
+  <p class="source">Lição: <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</p>
+</div>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) sobre qualquer decisão acima — ele pode detalhar o script que gerou o número, ou mostrar o texto completo da decisão em <code>DECISOES.md</code> (fora deste pacote compartilhável).
+</div>
+
+<nav class="lesson-nav">
+  <a href="referencias-bibliograficas.html" target="_blank" rel="noopener noreferrer">← Bibliografia do projeto</a>
+  <a href="glossario-estatistico.html" target="_blank" rel="noopener noreferrer">Glossário estatístico →</a>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,620 @@
+# Registro de Decisões — Projeto Aplicado TDS/LAGWRP
+
+> **Canônico.** Decisão nova entra só neste arquivo. O manuscrito resumido não guarda
+> outra cópia: `docs_local/01_manuscrito/Artigo_Resumido/DECISOES.md` só aponta para cá.
+
+> **Propósito:** registrar *por que* cada escolha do projeto foi feita, não só *o que* foi feito.
+> O `resultados_comparacao.csv` e o MLflow registram resultados; este arquivo registra o raciocínio.
+>
+> **Regra de manutenção:** toda decisão metodológica relevante entra aqui **na mesma execução** em
+> que é tomada, com motivo e alternativa descartada (regra da seção 2.2 do `docs_local/02_governanca/plano_projeto_TDS.md`).
+> Uma decisão sem alternativa descartada registrada está incompleta.
+
+## Formato de cada entrada
+
+```
+### D-XX — Título curto
+- **Data:** AAAA-MM-DD
+- **Status:** Decidida | Pendente | Revertida | Em verificação
+- **Contexto:** o problema que exigiu a decisão
+- **Decisão:** o que foi escolhido
+- **Alternativas descartadas:** o que foi considerado e por que não
+- **Evidência:** arquivo/script/run que embasa
+```
+
+---
+
+## Parte 1 — Governança e ferramentas
+
+### D-01 — Descartar o notebook anterior e reconstruir do zero
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Contexto:** existia `projeto_aplicado_v1 (1).ipynb` com EDA e Random Forest/GridSearchCV.
+- **Decisão:** ignorar o notebook e construir toda a bateria do zero.
+- **Alternativas descartadas:** *refatorar o notebook existente* — descartada porque o arquivo estava com JSON truncado/corrompido (ilegível) e porque herdar decisões de pré-processamento não documentadas comprometeria a rastreabilidade exigida pela governança.
+- **Evidência:** decisão do usuário; `docs_local/02_governanca/plano_projeto_TDS.md` §0.
+
+### D-02 — MLflow local como camada de rastreamento de experimentos
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Contexto:** bateria de ~10 métodos × 3 horizontes × variantes de CV gera dezenas de execuções; o CSV sozinho não versiona experimentos descartados nem hiperparâmetros.
+- **Decisão:** MLflow rodando local (`mlruns/`), sem nuvem. `resultados_comparacao.csv` passa a ser export das runs finais.
+- **Alternativas descartadas:** *Weights & Biases* — dashboards melhores, mas cloud por padrão; *DVC* — mais forte para versionar dados, mas curva de aprendizado desproporcional para projeto acadêmico solo; *só o CSV manual* — não guarda histórico de tentativas descartadas.
+- **Evidência:** `docs_local/02_governanca/plano_projeto_TDS.md` §4.3; `utils/experiment_tracking.py`; pasta `mlruns/`.
+
+### D-03 — Notebook único sincronizado com os `.py`
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Decisão:** manter `notebook.ipynb` único, atualizado na mesma execução de qualquer alteração em script.
+- **Alternativas descartadas:** *um notebook por metodologia* — dificultaria a leitura corrida do projeto no GitHub, que é o objetivo declarado.
+- **Evidência:** `docs_local/02_governanca/plano_projeto_TDS.md` §4.1.
+
+### D-04 — READMEs bilíngues com seletor de idioma
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Decisão:** `README.md` (inglês, padrão GitHub) + `README.pt-br.md`, com seletor de idioma no topo de ambos.
+- **Evidência:** `docs_local/02_governanca/plano_projeto_TDS.md` §4.2.
+
+### D-05 — Artigo LaTeX como documento vivo
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Decisão:** `docs_local/01_manuscrito/Artigo/template.tex` atualizado a cada resultado, não ao final do projeto.
+- **Evidência:** `docs_local/03_prompts/Prompt — Manutenção contínua do artigo científico do Projeto Aplicado.md`.
+
+---
+
+## Parte 2 — Escopo e estrutura dos dados
+
+### D-06 — Unificar `EFF-001` e `EFF-001A` como uma única série
+- **Data:** 2026-08-13 · **Status:** Decidida (com ressalva — ver D-13)
+- **Contexto:** o código do ponto de monitoramento muda em ~2012.
+- **Decisão:** tratar como o mesmo ponto físico, unificando as séries.
+- **Justificativa:** mesma latitude/longitude (34,1372 / −118,27422), mesmo método analítico, transição contínua mês a mês (580 → 598 mg/L) sem descontinuidade.
+- **Alternativas descartadas:** *tratar como séries separadas* — descartada porque são fisicamente o mesmo efluente; separar reduziria arbitrariamente a série a 14 anos.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `2_quebra_localizacao`.
+
+### D-07 — Pontos de monitoramento secundários apenas como contexto
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Contexto:** `R-4`, `R-7`, `RSW-650`, `RSW-654` são água receptora (LA River), não efluente.
+- **Decisão:** usar apenas como contexto na introdução/discussão; nenhuma análise dedicada.
+- **Alternativas descartadas:** *incluir na bateria de previsão* — descartada porque os objetivos do professor tratam do efluente da estação; incluir água receptora misturaria dois sistemas com dinâmicas diferentes.
+
+### D-08 — Série canônica: `Monthly Average (Mean)` em mg/L
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Decisão:** série mensal a partir das linhas `Calculated Method == "Monthly Average (Mean)"`, `Units == "mg/L"`.
+- **Alternativas descartadas:** *amostras brutas* — frequência muito desigual entre parâmetros (BOD quase diário, TDS mensal), inviabilizando merge direto.
+
+### D-09 — Usar a média mensal pré-calculada em vez de reagregar
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Contexto:** havia risco de a agregação da planta usar critério próprio não documentado.
+- **Decisão:** usar a pré-calculada.
+- **Justificativa:** a reagregação a partir das amostras brutas produziu **diferença média absoluta de 0,0 mg/L** e slope idêntico (3,9064 mg/L/ano) — as duas são equivalentes, então não há motivo para reagregar.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `4_reagregacao`.
+
+### D-10 — Nenhuma imputação de meses faltantes
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Justificativa:** a verificação encontrou **0 meses faltantes** em 182 pontos — a questão não se aplica.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `7_meses_faltantes`.
+
+### D-11 — Tratamento de outliers: manter a série completa
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Justificativa:** o resultado é robusto às três variantes — série completa 3,906 mg/L/ano (p=0,0056), winsorizada 5-95% 3,626 (p=0,0055), remoção de 6 pontos por resíduo STL 3σ 3,674 (p=0,0079). Como a conclusão não muda, manter tudo é a opção que menos intervém no dado.
+- **Alternativas descartadas:** winsorização e remoção por STL — tecnicamente válidas, mas removem informação sem alterar a conclusão.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `6_outliers`.
+
+---
+
+## Parte 3 — Achados que mudaram o rumo do projeto
+
+### D-12 — Reconstrução da vazão do efluente validada ⭐
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Contexto:** o dataset não traz vazão explicitamente, mas traz o mesmo parâmetro em mg/L e lb/day.
+- **Decisão:** reconstruir a vazão via `vazão(MGD) = lb/day ÷ (mg/L × 8,34)` e promover o `lb/day` de dado secundário a peça central da análise causal.
+- **Validação (forte):** as vazões derivadas independentemente de TDS e de Cloreto coincidem — 9,4863 vs 9,4877 MGD de média (diferença de 0,015%). Amônia (8,37) e BOD (9,09) ficam na mesma ordem. Média ~9,5 MGD = 47% da capacidade nominal de 20 MGD, plausível. **0 pontos fora da faixa fisicamente possível.**
+- **Alternativas descartadas:** *ignorar o lb/day como secundário* (posição original do plano) — descartada porque a vazão é a variável do mecanismo causal descrito no artigo da Nature.
+- **Evidência:** `vazao_reconstruida_resultados.csv`; `script_16_reconstrucao_vazao.py`.
+
+### D-13 — A quebra EFF-001→EFF-001A é artefato de modelagem, não degrau real
+- **Data:** 2026-08-13 · **Status:** Decidida (investigação concluída)
+- **Contexto:** um modelo OLS com termo de step estimou degrau de +137 mg/L na transição, o que ameaçava invalidar a tendência.
+- **Decisão:** rejeitar a hipótese de degrau artificial; o degrau era efeito de forçar uma reta única + step sobre uma série que é **cíclica/por regime**, não monotônica.
+- **Justificativa:** transição contínua mês a mês (580 → 598 mg/L), mesmo método analítico, mesmo MDL, mesma coordenada geográfica.
+- **⚠️ Achado colateral crítico:** ainda assim, a tendência **desaparece** quando calculada só no período pós-2012: 0,837 mg/L/ano com **p = 0,59** (não significativo), contra 3,906 mg/L/ano com p = 0,0056 na série completa. Ou seja, a tendência de 15 anos depende materialmente do trecho 2011-2012. Isso **precisa constar como limitação no artigo**.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `2_quebra_localizacao`.
+
+### D-14 — Reenquadramento: padrão cíclico por regime, não tendência monotônica
+- **Data:** 2026-08-13 · **Status:** **Confirmada** (2026-08-14 — ver D-37 para a evidência quantitativa completa: PDSI explica bem os ciclos)
+- **Contexto:** a investigação de D-13 revelou que a série tem estrutura por período, não inclinação constante.
+- **Padrão identificado:** 2011 baseline (563 mg/L) → alta 2011-2015 (+46%, coincide com a seca da Califórnia 2012-2016) → queda 2015-2019 (−21%) → alta 2019-2022 (+21%) → estável/leve queda 2022-hoje.
+- **Decisão final:** reformular a Etapa 3 em torno de regime/ciclo ligado a seca (PDSI), não conservação isolada — com WRTDS e balanço de massa testando a decomposição água-de-origem × vazão local.
+- **Alternativas descartadas:** manter o enquadramento de tendência monotônica — descartada porque a checagem quantitativa (D-37) mostra que um índice de seca independente (PDSI, sem qualquer informação das datas do TDS) explica 68-79% da importância relativa na decomposição LMG e tem changepoints coincidindo com as viradas observadas dentro de ~4-9 meses (3 de 4 séries) a ~15 meses (1 caso).
+- **Evidência:** D-37; `pdsi_regimes_resultados.csv`; `script_18_pdsi_regimes.py`.
+
+---
+
+## Parte 4 — Decisões de tratamento (resolvidas em 2026-10-12)
+
+### D-15 — Correção de autocorrelação no Mann-Kendall ⚠️ decisão de maior impacto
+- **Data:** 2026-10-12 · **Status:** Decidida
+- **Contexto:** a significância da tendência **inverte** conforme a correção adotada:
+
+| Variante | Slope (mg/L/ano) | p-valor | Significativo? |
+|---|---|---|---|
+| MK simples | 3,907 | 0,0056 | Sim |
+| Hamed & Rao (correção de variância) | 3,907 | 0,182 | **Não** |
+| Pre-whitening | 3,907 | 0,417 | **Não** |
+| Trend-free pre-whitening (TFPW) | 3,907 | 0,00014 | Sim (forte) |
+| Seasonal Kendall | 4,667 | 0,0038 | Sim |
+
+- **Decisão:** reportar as 5 variantes lado a lado no artigo, como tabela de análise de robustez, em vez de escolher uma para sustentar a conclusão principal. Texto-base: "a tendência é significativa sob 3 de 5 correções de autocorrelação testadas (incluindo a metodologicamente mais recomendada, TFPW); as duas que não detectam significância (Hamed-Rao, pre-whitening simples) são reconhecidas na literatura metodológica como excessivamente conservadoras em séries curtas (~180 pontos) — perda de poder estatístico, não ausência do efeito."
+- **Alternativas descartadas:** escolher uma única variante (ex.: só MK simples, ou só a mais conservadora) para a conclusão principal — descartada por ser uma escolha silenciosa que esconderia a sensibilidade do resultado ao método de correção, quebrando o mesmo princípio já aplicado em D-16/D-18/D-56/D-57 (nunca escolher silenciosamente uma variante quando elas discordam).
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `8_autocorrelacao_mk`.
+
+### D-16 — Tratamento dos valores ND do BOD (65% da série)
+- **Data:** 2026-10-12 · **Status:** Decidida
+- **Resultado dos 5 tratamentos testados** (correlação TDS-BOD destendenciada):
+
+| Variante | Valor substituto | r | p |
+|---|---|---|---|
+| A — MDL/2 | 1,5 | −0,079 | 0,289 |
+| B — Zero | 0,0 | −0,068 | 0,360 |
+| F — Kaplan-Meier | 3,0 | −0,126 | 0,090 |
+| G — ROS (Helsel) | 2,517 | −0,108 | 0,147 |
+| H — MLE lognormal | 2,738 | −0,122 | 0,102 |
+
+- **Achado relevante:** em **todas** as variantes a correlação é **negativa e não significativa** — ou seja, a hipótese do professor (TDS alto piora a remoção de BOD, gerando correlação positiva) **não se confirma** nesses dados. O sinal é inclusive oposto. A escolha do tratamento muda a magnitude, não a conclusão.
+- **Decisão:** citar **ROS/Helsel (G, r=−0,108, p=0,147)** como o número principal no corpo do texto — é o único dos 5 com justificativa estatística própria (ajuste de reta de probabilidade, já tratado em `script_00b` como "the statistically best-grounded" dos tratamentos do dataset canônico), não um valor arbitrário como MDL/2 ou zero. A tabela completa das 5 variantes vai em nota/apêndice só para mostrar que a conclusão (não significativo, sinal invertido do esperado) é invariante ao tratamento.
+- **Alternativas descartadas:** citar MDL/2 ou zero como número principal — descartadas por serem substitutos arbitrários sem justificativa estatística própria, diferente de ROS/Helsel.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `1_nd_bod`.
+
+### D-17 — Mudanças de MDL ao longo da série
+- **Data:** 2026-10-12 · **Status:** Decidida
+- **Contexto:** foram identificadas 4 mudanças de MDL, três delas com diferença de nível estatisticamente detectável:
+
+| Mudança | p (Mann-Whitney no nível de TDS) | Preocupante? |
+|---|---|---|
+| MDL 28 → 25 (2011-06-04) | 0,017 | Sim |
+| MDL 25 → 35 (2016-12-19) | 0,052 | Limítrofe |
+| MDL 35 → 28 (2021-02-06) | 0,0099 | Sim |
+| MDL 28 → 35 (2021-09-01) | 0,618 | Não |
+
+- **Questão em aberto:** essas diferenças de nível são causadas pela mudança de método ou são coincidência temporal com mudanças reais de regime (que D-14 identificou nos mesmos períodos)? As trocas de 2011-06-04 e 2021-02-06 ficam, respectivamente, ~7 meses e ~1 ano antes das viradas de regime de 2012 e 2022 (D-14); a de 2016-12-19 não cai perto de nenhuma virada conhecida (2012, 2014-04, 2019, 2022).
+- **Decisão:** não forçar uma atribuição causal única — registrar como limitação explícita no artigo: "as trocas de MDL em 2011 e 2021 ficam temporalmente próximas a duas das quatro viradas de regime identificadas, criando um confound não separável com estes dados; a evidência independente de PDSI (D-37) e de TDS de água de origem (D-28/D-54) — nenhuma das duas depende de MDL — já corrobora os regimes por vias que não dependem dessa variável, dando suporte indireto a 'regime real', sem eliminar completamente a dúvida sobre a troca de 2016-12-19." Mesmo princípio epistemológico do resto do projeto (D-14/D-29): reportar a ambiguidade em vez de resolvê-la silenciosamente.
+- **Alternativas descartadas:** atribuir as diferenças de nível só a artefato de método, ou só a mudança real de regime — ambas descartadas por não serem separáveis com os dados disponíveis; afirmar qualquer uma das duas sem ressalva seria uma escolha não sustentada pela evidência.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `3_mudanca_mdl`; D-14, D-28, D-37, D-54.
+
+### D-18 — Agregação anual: não significativa em nenhuma variante
+- **Status:** Informativo (não requer decisão, mas requer registro no artigo)
+- **Resultado:** média ano civil 4,75 (p=0,379); média ano hidrológico 3,695 (p=0,398); mediana ano civil 4,00 (p=0,435); mediana ano hidrológico 5,262 (p=0,300).
+- **Leitura honesta:** nenhuma variante anual atinge significância — esperado, porque n cai de 182 para 15-16 pontos, com perda severa de poder estatístico. Não contradiz a análise mensal, mas também não a corrobora.
+- **Evidência:** `matriz_sensibilidade_resultados.csv`, item `5_agregacao_anual`.
+
+---
+
+## Parte 5 — Estação comparadora (dados externos)
+
+### D-19 — Rejeitar o ECHO DMR como fonte de dados comparativos
+- **Data:** 2026-08-14 · **Status:** Decidida
+- **Contexto:** buscava-se uma segunda estação para testar se o padrão cíclico se replica.
+- **Decisão:** não usar EPA ECHO/DMR; usar o portal **CIWQS eSMR** (mesma fonte dos dados originais do LAGWRP).
+- **Justificativa:** o DMR só contém o que a outorga obriga a reportar, em formato de conformidade — janela curta e cobertura irregular. O eSMR entrega formato idêntico ao `TDS.csv` (parsing zero-custo), série desde 2010, colunas MDL/RL/Qual e ambas as unidades (mg/L e lb/day, necessárias para replicar a reconstrução de vazão de D-12).
+- **Evidência:** análise dos CSVs baixados (ver D-20, D-21).
+
+### D-20 — Rejeitar Point Loma (CA0107409) como comparadora
+- **Data:** 2026-08-14 · **Status:** ⚠️ **Parcialmente revertida em 2026-08-14 — ver D-28**
+- **Justificativa original:** o CSV baixado tem 53 medições de TDS, **todas de `Raw Sewage Influent`** — nenhuma de efluente. Valores 1.880-2.160 mg/L (≈3× o LAGWRP). *Correção (2026-10-13, ver nota em D-28): a atribuição a "intrusão de água do mar" não foi verificada contra fonte primária — ver D-28 para a causa real documentada.* Janela de apenas 5 anos (2021-2026).
+- **Evidência:** `pont loma wwtp california id ca0107409  august 2021 to august 2026.csv`.
+
+### D-28 — Reversão parcial de D-20: dados de influente são proxy válido de efluente
+- **Data:** 2026-08-14 · **Status:** Decidida (revisa D-20)
+- **Contexto:** a leitura integral do estudo SCSC/DBS&A (2018) trouxe evidência que contradiz o motivo pelo qual Point Loma foi descartada.
+- **Achado:** o estudo afirma explicitamente que "TDS entering a WWTP nearly matched the discharge water quality from the WWTP's effluent. Therefore influent water quality is used as a proxy or surrogate to understand the WWTP effluent water quality." A Tabela 8 reporta R² de influente vs. efluente por planta — e **Point Loma tem R² = 0,98, o mais alto de todas as 14 plantas avaliadas**.
+- **Decisão revisada:** o argumento "só tem influente, logo não serve" **não se sustenta**. Os dados de Point Loma já baixados podem ser usados para testar **padrão temporal** (formato do ciclo, timing das viradas), que é justamente o que interessa para validar D-14.
+- **O que continua valendo de D-20:** a ressalva do **nível absoluto** permanece — ~2.000 mg/L vs. ~600 mg/L do LAGWRP. Comparar amplitude absoluta seria incorreto; comparar forma normalizada da série (ex. z-score ou variação percentual) é legítimo.
+- **Correção (2026-10-13) — "intrusão de água do mar" nunca foi verificada, causa real é outra:** a justificativa original (D-20) e esta entrada atribuíam o TDS alto de Point Loma a intrusão de água do mar, mas essa atribuição nunca foi checada contra uma fonte primária — era suposição própria (planta costeira + TDS alto). Pesquisa web (2026-10-13) nos relatórios oficiais de pré-tratamento/South Bay da cidade de San Diego (2013-2020) encontrou a causa real documentada: **infiltração na rede coletora e descarga de usuários industriais de alto TDS** (processamento de alimentos, abrandadores de água, lavanderias, resfriamento de geração de energia) — nenhum desses relatórios menciona intrusão de água do mar. Mecanismo estrutural: a Otay River Pump Station direciona o fluxo de alto TDS do "Imperial Beach Sewer" diretamente ao South Metro Interceptor (que alimenta Point Loma), sem passar pela diluição do South Bay Water Reclamation Plant; a cidade instalou unidades de EDR (eletrodiálise reversa) em 2017 especificamente para remoção de TDS/cloreto nesse ponto. **Não muda nenhuma conclusão do artigo** (Point Loma nunca foi usada além de comparação de forma normalizada da série, D-28 acima), só corrige uma atribuição causal não verificada no log de decisões.
+- **Limitação remanescente:** janela de 5 anos (2021-2026) cobre apenas o final da nossa série — insuficiente para testar os ciclos de 2011-2019.
+- **Evidência:** Estudo SCSC/DBS&A (2018), Tabela 8; `docs_local/06_aula_e_apoio/material_apoio_referencias.md` §9.3. Causa real do TDS alto: City of San Diego, South Bay Pretreatment/Annual Reports 2013-2020 (`sbayrep130301.pdf`, `sbayrep140301.pdf`, `2020_south_bay_pretreatment_report.pdf`, sandiego.gov).
+
+### D-29 — O driver dominante do TDS é a água de origem, não a conservação
+- **Data:** 2026-08-14 · **Status:** Decidida (achado de literatura, muda o enquadramento causal)
+- **Contexto:** o projeto foi desenhado em torno do mecanismo da Nature (2020): conservação → menos vazão → menos diluição → TDS sobe.
+- **Achado do estudo SCSC/DBS&A (2018), com texto completo verificado:** a decomposição de importância relativa (`relaimpo`, método lmg) mostra que o **TDS da água de origem responde por 88% da variabilidade** do TDS de influente (EMWD combinado, R²=0,979), contra apenas **12% do consumo per capita interno**. O padrão se repete: Perris Valley 99%/1%, Moreno Valley 99%/1%, San Jacinto 97%/3%.
+- **Magnitudes:** conservação contribui 1,2-1,7 mg/L por 1,0 gpcd de redução. Já o TDS da água importada varia **~300 mg/L (Colorado River Aqueduct)** e **~200 mg/L (State Water Project)** entre anos secos e úmidos, seguindo o PMDI.
+- **Implicação:** a amplitude do driver climático é suficiente para explicar sozinha os ciclos observados no LAGWRP. Isso **corrobora independentemente D-14** (reenquadramento cíclico/por regime) e sugere que a variável explicativa correta não é tempo decorrido, mas qualidade da água de origem seguindo ciclos de seca.
+- **Consequência para o artigo:** o mecanismo da Nature (2020) continua válido e citável — mas apresentá-lo como *o* mecanismo seria incorreto. Ele é o efeito menor dos dois.
+- **Alternativa descartada:** manter o enquadramento exclusivo em conservação — descartada por contradizer evidência quantitativa direta de 26 ETEs da mesma região.
+- **Evidência:** `docs_local/06_aula_e_apoio/material_apoio_referencias.md` §9.1; `docs_local/04_literatura/SCSC-TDS-Trends-Study.txt`, seções 4.2 e 5.
+
+### D-30 — Lacuna crítica de dados: falta a série de TDS da água de origem
+- **Data:** 2026-08-14 · **Status:** Parcialmente resolvida (ver D-54, lado Los Angeles/LADWP); remanescente (lado Glendale) convertido em recomendação de trabalho futuro em `conclusao.tex` (item 0), já que a coleta de dados do projeto está encerrada (2026-10-12).
+- **Contexto:** decorre diretamente de D-29 — a variável mais explicativa (TDS da água de origem) **não existe no nosso dataset**.
+- **Situação:** temos TDS/Cloreto/Amônia/BOD do efluente e a vazão reconstruída, mas nenhuma medida da qualidade da água que entra no sistema. Isso significa que a variável que a literatura aponta como responsável por ~88% da variabilidade está ausente do modelo.
+- **Ação proposta:** buscar séries de TDS dos reservatórios/ETAs da MWDSC que abastecem a região (Castaic Lake, Jensen WTP, Weymouth WTP para SWP/CRA) e/ou o índice PMDI da NOAA como proxy climático.
+- **Impacto se não resolvido:** o modelo fica limitado a explicar a variação sem acesso ao seu principal determinante — o que deve, no mínimo, constar como limitação explícita no artigo.
+- **Atualização (2026-08-27) — confirmação real das fontes candidatas via busca web:** a LAGWRP atende **duas cidades com portfólios de abastecimento diferentes**, o que a análise do SCSC (2018, só água importada) não capturou:
+  - **Lado Los Angeles (LADWP):** média FY2020-2024 confirmada pela própria LADWP — LA Aqueduct 41%, MWD (importada) 50%, água subterrânea local 7%, água reciclada 2%. O LA Aqueduct (Vale de Owens/Sierra Leste) é uma fonte que **não existe** no framework CRA/SWP do estudo SCSC.
+  - **Lado Glendale (Glendale Water & Power):** 60-70% MWD (mistura Colorado River Aqueduct + State Water Project) + 30-40% água subterrânea local, sem aqueduto próprio.
+  - **Estações de tratamento confirmadas:** Jensen WTP (Granada Hills) e Weymouth WTP (La Verne) são as duas ETAs da MWD identificadas por fonte oficial como as que efetivamente tratam a água entregue a Glendale (Castaic Lake é reservatório terminal do SWP, não ETA — mantido como candidato de menor prioridade).
+  - **Implicação:** a variabilidade real do TDS de origem da LAGWRP pode ser mais complexa que o padrão CRA/SWP puro do estudo SCSC, por causa da fração do LA Aqueduct no lado Los Angeles. O pedido de dados à professora (D-52/`docs_local/06_aula_e_apoio/solicitacao_dados_professora_california.md`) foi ajustado para nomear Jensen/Weymouth especificamente em vez de "MWDSC" genérico.
+  - **Fontes:** ladwp.com/who-we-are/water-system/sources-supply; ladwp.com (MWD subpágina); glendaleca.gov (Water Quality Reports, WQR.20); ARCS LA Chapter — Water Treatment Plants Fact Sheet (arcsfoundation.org).
+- **Atualização (2026-09-01) — tentativa de buscar valores reais de TDS de cada fonte, resultado majoritariamente negativo:**
+  - **Achado real e verificado:** água do State Water Project no ponto de Devil Canyon (California Aqueduct) — TDS majoritariamente entre 100-380 mg/L (maior parte 200-320 mg/L), 1997-2007, dado do banco online do DWR anexado como exhibit numa audiência de direitos de água (Muni/Western Ex. 10-22). Não é o ponto exato de entrega a Los Angeles/Glendale (é mais a montante, perto de San Bernardino), mas é um dado real de TDS do SWP.
+  - **⚠️ Erro de atribuição da busca, descartado:** uma busca inicial atribuiu TDS de 427 mg/L (Jensen) e 469 mg/L (Weymouth, dado de "2007") a dois PDFs específicos — ao abrir os PDFs de verdade, o conteúdo real era outra coisa (Muni/Western Ex. 10-22, o mesmo dado do California Aqueduct acima; e Ex. 10-23, dado do rio Santa Ana, sem relação com Jensen/Weymouth). **Esses números de Jensen/Weymouth não são reais e não devem ser citados em lugar nenhum do projeto.**
+  - **Não verificado (bloqueio de acesso, não falta de existência):** os números de "LA Aqueduct 252 mg/L / 59% do abastecimento em 2024" e "Glendale ~200 ppm TDS / 30% subterrânea" apareceram só em agregadores de terceiros; tentativas de acessar as fontes primárias (relatório oficial da LADWP em PDF, página de resultados de monitoramento da LADWP, WQR.20 da Glendale) retornaram erro 403 (bloqueio automatizado), não confirmando nem contradizendo os números.
+  - **Conclusão:** a tentativa de contornar o pedido à professora buscando os dados publicamente não teve sucesso — reforça, em vez de substituir, a necessidade do pedido em `docs_local/06_aula_e_apoio/solicitacao_dados_professora_california.md`.
+
+### D-54 — Correlação forte entre TDS de origem (LADWP) e TDS de efluente da LAGWRP
+- **Data:** 2026-09-01 · **Status:** Decidida (verificação de dados concluída — ver nota de 2026-09-01 abaixo)
+- **Contexto:** o usuário baixou 21 relatórios anuais de qualidade da água da LADWP (2004-2024, pasta `docs_local/05_relatorios_qualidade/ladwp las drinking water quality report/`). Cada um tem uma tabela padrão (Tabela II, "Aesthetic-based Secondary Standards") com TDS médio por fonte (LA Aqueduct, poços locais, e as 3 ETAs da MWD — Weymouth/Diemer/Jensen) e o percentual de mistura de abastecimento da cidade naquele ano.
+- **Extração:** os 21 anos foram lidos e tabulados em `ladwp_tds_por_fonte_historico.csv`. **Só 2004, 2005 e 2024 foram conferidos com cuidado** (célula a célula); os outros 18 anos foram extraídos em lote, sob risco real de erro de leitura/alinhamento de tabela — o mesmo tipo de erro já confirmado nesta sessão (atribuição errada de TDS a Jensen/Weymouth vindo de um resumo de busca web, corrigida na entrada anterior deste documento).
+- **Método de comparação (`script_28_ladwp_tds_origem.py`):** para cada ano, calculado um TDS de origem ponderado = (TDS Aqueduct × %Aqueduct + TDS médio das 3 ETAs da MWD × %MWD + TDS médio dos poços × %subterrânea) ÷ soma dos pesos. Comparado com o TDS médio anual de efluente da LAGWRP (`TDS.csv`, EFF-001/EFF-001A unificados, `Calculated Method == "Monthly Average (Mean)"`).
+- **Resultado (preliminar, n=14 anos com sobreposição 2011-2024):** correlação de Pearson r=0,912 (p=0,000005) entre TDS de origem ponderado e TDS de efluente; r=-0,750 (p=0,002) entre % de LA Aqueduct no mix e TDS de efluente, na direção esperada (mais Aqueduct = água menos salina = efluente menos salino). Ambas muito mais fortes que a correlação já obtida com PDSI (D-37, LMG 67-79%).
+- **Por que não vira ADR "Decidida" ainda:** um r=0,91 com 18 dos 21 pontos de dado não verificados é exatamente o cenário em que um erro sistemático de extração poderia estar inflando artificialmente a correlação (ex. arredondamentos, troca de coluna consistente em relatórios de formato parecido). Tratar isso como achado confirmado sem conferência seria romper a regra do projeto de nunca citar dado não verificado como fato.
+- **Verificação concluída em duas etapas (2026-09-01):** primeiro uma amostra de 4 anos do meio da série (2010, 2014, 2018, 2021), somados aos 3 já conferidos antes (2004, 2005, 2024) — 7 de 21 anos, zero discrepâncias. Em seguida, **os 14 anos restantes também foram conferidos** (2006, 2007, 2008, 2009, 2011, 2012, 2013, 2015, 2016, 2017, 2019, 2020, 2022, 2023), completando os **21 de 21 anos (100%) verificados célula a célula contra o PDF original — zero discrepâncias em qualquer célula, em qualquer ano** (TDS médio, faixa min-max, e percentual de mistura, nas 6 fontes de cada ano). Uma inconsistência encontrada em 2015 (TDS médio do Diemer, 633 mg/L, fora da própria faixa min-max informada, 660-665) foi confirmada como erro do relatório original da LADWP, não da nossa extração — preservada como está na fonte, não "corrigida" silenciosamente. Esta é agora uma auditoria de 100% dos dados, não mais uma verificação por amostragem.
+- **Limitação que permanece, mesmo após a verificação total:** o peso usado para "MWD" na ponderação é uma média simples das 3 ETAs (Weymouth/Diemer/Jensen), não o peso real de cada uma dentro do total importado (esse detalhe não está publicado em nenhum dos 21 relatórios). E a correlação é anual (14 pontos), não mensal — não permite testar defasagem fina como foi feito com o PDSI em D-37; os relatórios da LADWP só publicam a média/faixa anual por fonte, não uma série mensal.
+- **Evidência:** `ladwp_tds_por_fonte_historico.csv`; `script_28_ladwp_tds_origem.py`; `ladwp_tds_origem_vs_efluente.csv`.
+
+### D-21 — Rejeitar San Jose Creek (CA0053911) como comparadora
+- **Data:** 2026-08-14 · **Status:** Decidida
+- **Justificativa:** o CSV tem apenas 8 linhas de TDS e **todas marcadas como `No Discharge`** (NODI "C"). Zero valores utilizáveis — é planta de reclamação que recicla praticamente tudo, então descarga superficial é evento raro.
+- **Evidência:** `SAN JOSE CREEK WRP California id ca0053911 august 2021 to august 2026.csv`.
+
+### D-22 — Adotar Tillman WRP (CA0056227) como comparadora prioritária
+- **Data:** 2026-08-14 · **Status:** **Em verificação** · *Nota (2026-08-14): a leitura do estudo SCSC confirmou que a cidade de Los Angeles (LASAN) não participa daquele estudo — nem LAGWRP nem Tillman estão entre as 26 estações. A recomendação do Tillman segue válida pelos critérios próprios (mesma operadora, mesmo rio receptor, interior), mas não é corroborada por aquela lista.*
+- **Decisão proposta:** puxar TDS do efluente do Donald C. Tillman WRP via CIWQS eSMR, período 2010-2026.
+- **Justificativa:** mesma operadora (LA Sanitation), mesma área de serviço (Vale de San Fernando), **mesma água receptora (LA River)**, interior (sem intrusão salina), tratamento terciário. Isso aproxima uma comparação controlada: mesma seca, mesma política estadual, planta diferente.
+- **Alternativas em ordem:** Burbank WRP (2ª opção, também LA River); Whittier Narrows/Pomona (3ª, mas mesmo permit do San Jose Creek → mesmo risco de "No Discharge").
+- **Verificação pendente:** conferir densidade de dados de TDS no efluente antes de investir — Tillman também faz reúso e pode ter o mesmo problema do San Jose Creek.
+
+---
+
+## Parte 6 — Decisões sobre o artigo
+
+### D-23 — Horizontes de previsão: 10, 15 e 20 anos
+- **Status:** Decidida · Contados a partir do último dado observado. O horizonte intermediário de 15 anos foi adicionado para mostrar o crescimento gradual da incerteza.
+
+### D-24 — Incluir Prophet **e** regressão bayesiana
+- **Status:** Decidida · Ambos expõem incerteza crescente com o horizonte. **Alternativa descartada:** escolher apenas um — descartada porque a mensagem central do trabalho é a faixa de cenários com incerteza, e ter dois métodos independentes com essa propriedade fortalece o argumento.
+
+### D-25 — Limpeza das imagens de exemplo do template
+- **Status:** Decidida · Remover `matrix-de-confusao.png` (órfã, tema não aplicável) e substituir `acurácia-x-epocas.png` quando houver figura real. Aprovada pelo usuário.
+
+### D-26 — Substituir as 3 referências de exemplo do `refs.bib`
+- **Status:** Decidida · `vaswani2017attention`, `karimi2024employee` e `bai2020industry` são exemplos de sintaxe do template e saem quando as referências reais entrarem.
+
+### D-27 — Não usar o valor "+50 mg/L" do artigo ACS ES&T Water (2022)
+- **Data:** 2026-08-13 · **Status:** Decidida
+- **Justificativa:** o número não pôde ser confirmado no texto completo (ACS retorna 403); fontes de terceiros confirmam o desenho do estudo e a direção do efeito, mas não esse valor específico. Citar seria reproduzir um dado não verificado.
+- **Evidência:** `docs_local/06_aula_e_apoio/material_apoio_referencias.md` §1.3.
+- **Nota (2026-08-26):** o valor "+50 mg/L" de Wolfand et al. permanece não confirmado e não usado. Uma cifra estadual diferente, verificada e percentual (não o mesmo estudo), foi obtida de Porse et al. (2023) — ver D-53.
+
+---
+
+## Parte 7 — Registro completo da bateria de scripts (preenchido nesta sessão)
+
+### D-31 — Confirmação de D-14 (regime cíclico), com ressalva importante
+- **Data:** 2026-08-14 · **Status:** Decidida (confirma D-14, com nuance)
+- **Contexto:** D-14 estava "pendente de confirmação" — exigia checar se a vazão reconstruída acompanha os mesmos períodos de virada (2012/2015/2019/2022) identificados na série de TDS.
+- **Decisão:** **confirmar o reenquadramento cíclico/por regime**, mas registrar que a vazão sozinha **não explica totalmente** o padrão.
+- **Evidência quantitativa:**
+  - Correlação mensal TDS×vazão(TDS): r = −0,373, p < 0,001, n = 182 (negativa, como esperado pelo mecanismo de diluição — menos vazão, mais concentração).
+  - Correlação anual TDS×vazão(TDS): r = −0,552, p = 0,027, n = 16.
+  - Vazão anual (MGD): 13,84 (2011) → declínio quase monotônico até 9,05 (2017) → platô 9-10 (2018-2020) → segunda queda para 7,3-7,5 (2021-2022) → 7,1-8,0 (2023-2026).
+  - TDS anual (mg/L): sobe 563→808 (2011-2015), cai para 653 (2017), sobe de novo a 768 (2022), recua para ~700 depois.
+- **Leitura honesta:** a correlação é significativa e no sinal esperado (dilução), e os dois grandes picos de TDS (2015, 2022) caem dentro das duas secas oficiais da Califórnia (2012-2016 e 2020-2022/2023) — alinhamento de regime é real. Mas a vazão **não replica** o formato fino da série de TDS: entre 2016 e 2017 a vazão ficou praticamente estável/baixa (9,48→9,05) enquanto o TDS caiu de forma acentuada (778→653), o que a hipótese pura de diluição não explica. Isso é **consistente com D-29** — a vazão/conservação é um driver real, mas parcial; a maior parte da variância (segundo a literatura, ~88%) viria da qualidade da água de origem, que **não está no nosso dataset** (D-30).
+- **Alternativas descartadas:** *rejeitar D-14 por falta de correspondência perfeita* — descartada porque a correlação é estatisticamente significativa e o alinhamento com as duas secas é real, só não é suficiente sozinho; *tratar a vazão como explicação completa* — descartada porque contradiz o mismatch observado em 2016-2017 e a evidência de literatura de D-29.
+- **Evidência:** `vazao_reconstruida_serie.csv`; cálculo desta sessão (correlação mensal/anual TDS×vazão, ver histórico de execução).
+
+### D-32 — Estratégia de validação padronizada em toda a bateria
+- **Data:** 2026-08-14 · **Status:** Decidida
+- **Decisão:** todo método de `script_01` em diante usa o mesmo framework (`validacao_utils.py`): holdout fixo dos últimos 24 meses, CV expansiva de 5 folds (horizonte 12 meses, mínimo 60 meses de treino) e backtest de origem móvel em +3/+5 anos (únicos horizontes com dado real disponível para comparar — não é possível validar empiricamente +10/+15/+20 anos, que ficam como extrapolação pura).
+- **Alternativas descartadas:** validar diretamente nos horizontes de +10/+15/+20 anos — impossível, não existe dado real futuro nesse alcance; split aleatório — descartado por vazar informação temporal.
+- **Nota:** os valores de `n_folds=5`, `min_treino=60`, `horizonte_cv=12`, `passo_origem=6` são defaults fixados na assinatura de `validacao_utils.py`, sem grid search documentado sobre esses números — foram adotados como convenção única para toda a bateria, não otimizados por método.
+- **Evidência:** `validacao_utils.py`; uso idêntico em `script_01` a `script_13`.
+
+### D-33 — Hiperparâmetros e sementes aleatórias por método
+- **Data:** 2026-08-14 · **Status:** Decidida (registro, não decisão nova)
+- **Decisão/registro:** `SEED = 42` fixo e logado no MLflow em todo método estocástico (Random Forest `script_03`, XGBoost/LightGBM `script_04`, SVR/GP `script_09`, Detrend+árvore `script_10`, regressão bayesiana `script_05` via `random_seed`, LSTM `script_13` via `torch.manual_seed`).
+- **O que teve busca real de hiperparâmetro (GridSearchCV + `TimeSeriesSplit(5)`, nunca split aleatório):** Random Forest (`n_estimators∈{100,300}`, `max_depth∈{None,5,10}`, `min_samples_leaf∈{1,3,5}`), XGBoost (`n_estimators∈{100,300}`, `max_depth∈{3,5,7}`, `learning_rate∈{0.03,0.1}`), LightGBM (mesma grade + `max_depth=-1`), SVR (`C∈{1,10,100}`, `epsilon∈{0.5,1,5}`, `gamma∈{scale,auto}`). SARIMA/SARIMAX: ordem escolhida por menor AIC em grade `p,q∈{0,1,2}`, `P,Q∈{0,1}`, `D∈{0,1}`, `d=1` fixo (série não-estacionária em nível).
+- **O que NÃO teve busca sistemática (default ou escolha heurística única, sem sensitivity analysis) — registrado como tal, não inventando justificativa:** Prophet (`changepoint_prior_scale` e demais hiperparâmetros no default da biblioteca); priors da regressão bayesiana (`a~Normal`, `b~Normal`, `sigma~HalfNormal`, escalas calibradas heuristicamente a partir de média/desvio dos dados, sem teste de sensibilidade); LSTM (`JANELA=12, HIDDEN_SIZE=32, EPOCHS=200, LR=0.01`, escolhidos a priori pelo tamanho pequeno do dataset, ~180 pontos, não por tuning); ETS (`error='add', trend='add', damped_trend=False` fixo, alternativas como multiplicativo/damped não testadas); Gaussian Process (forma do kernel e bounds escolhidos manualmente, só os hiperparâmetros internos otimizados via log-marginal-likelihood do scikit-learn, `n_restarts_optimizer=3`).
+- **Decisão de escopo comum a RF/XGB/LGBM/SVR/Detrend+árvore:** os hiperparâmetros escolhidos pelo GridSearchCV no ajuste final **não são re-buscados** a cada fold de CV/backtest (custo computacional proibitivo — dezenas de refits) — a mesma combinação vencedora é reaplicada em todos os folds.
+- **Alternativas descartadas:** tuning completo (grid search) para Prophet/priors bayesianos/LSTM/ETS — descartado por custo computacional vs. ganho esperado num dataset de ~180 pontos; re-buscar hiperparâmetros por fold de CV — descartado pelo custo (~25 refits por método).
+- **Evidência:** `script_03` a `script_05`, `script_09`, `script_10`, `script_13` (linhas citadas no relatório de leitura desta sessão).
+
+### D-34 — Desempenho fraco/negativo no holdout: registrado, não escondido
+- **Data:** 2026-08-14 · **Status:** Decidida (registro de resultado negativo)
+- **Contexto:** regra do plano (checklist §7): resultado negativo é resultado e deve ser reportado, não omitido.
+- **Achado central:** de 21 métodos em `resultados_comparacao.csv`, **apenas `svr` tem R² positivo no holdout de 24 meses (0,039)** — todos os demais têm R² negativo (pior que prever a média constante nesse recorte). Isso é um padrão consistente entre métodos, não um bug isolado — indicativo de que o holdout de 24 meses cai justamente num trecho de reversão de regime (ver D-14/D-31) que nenhum método captura bem fora de amostra.
+- **Piores casos específicos:**
+  - `gaussian_process` (script_09): RMSE=146,50, R²=−12,65, MASE=2,03 — pior resultado da bateria por larga margem; IC90 em +10/+15/+20a quase idêntico (≈886 mg/L de largura), sinal de que o kernel não captura extrapolação útil.
+  - `lstm` (script_13): MASE=0,686 > MASE do `naive` (0,436) — **o próprio script conclui explicitamente que o LSTM não venceu o baseline mais forte**, R²=−2,25.
+  - `naive_sazonal`: RMSE=87,83, R²=−3,91 — esperado (é baseline fraco), serve de piso.
+  - `theta`: IC90 em +20a com 3.004 mg/L de largura — o mais largo de toda a tabela.
+  - `sarima`: IC90 em +20a com 2.509 mg/L de largura — consistente com a limitação já documentada no script (extrapolação de SARIMA além do histórico é frágil).
+  - `xgboost`: tendência com p=0,100 — não significativa a 5%.
+- **Implicação para a síntese final:** reforça por que `script_15` prioriza MASE e comportamento do IC (largura crescente honesta) em vez de R² no holdout isolado — ver D-35.
+- **Evidência:** `resultados_comparacao.csv` (colunas `rmse_holdout`, `r2_holdout`, `mase_holdout`, `ic90_width_*y`).
+
+### D-35 — Critério de escolha dos 3 finalistas na síntese (`script_15`)
+- **Data:** 2026-08-14 · **Status:** Decidida (registro)
+- **Decisão:** os 3 finalistas escolhidos são `regressao_bayesiana`, `detrend_rf` e `hibrido_arima_prophet`.
+- **Justificativa por método (rastreável aos scripts, não inventada agora):**
+  - `regressao_bayesiana` — único método com incerteza genuinamente honesta e crescente com o horizonte (propriedade estrutural do modelo, não pós-hoc).
+  - `detrend_rf` — melhor MASE no holdout (0,4408) entre os métodos que capturam tendência sem saturar como as árvores puras, e o único dos 5 candidatos sem autocorrelação/heterocedasticidade residual significativa (`script_14_diagnostico_residuos.py`).
+  - `hibrido_arima_prophet` — melhor RMSE no holdout (46,40) entre os métodos de série temporal, com IC mais largo que os individuais (envoltória SARIMA+Prophet), lido como cenário mais cauteloso.
+- **Alternativas descartadas:** escolher só o de melhor RMSE/MASE isolado — descartada porque nenhum método vence em todos os critérios simultaneamente (ver D-34), e o plano (§5) já previa que a decisão final poderia ser 2-3 métodos complementares, não um vencedor único.
+- **Evidência:** `script_15_sintese_final.py`; `resultados_comparacao.csv`; `diagnostico_residuos_resultados.csv`.
+
+### D-36 — Desvios da estrutura de scripts em relação ao plano original (`docs_local/02_governanca/plano_projeto_TDS.md` §4)
+- **Data:** 2026-08-14 · **Status:** Decidida (registro de desvio, não retroativo)
+- **Contexto:** o plano original (§4) previa uma bateria de 8 scripts (`script_00` a `script_08`), incluindo `script_00b_sensibilidade_tratamento.py`, `script_01b_analises_anuais.py`, `script_06_wrtds_balanco_massa.py`, `script_07_estruturais_gam_quantilica.py`, `script_08_intervencao_svr_fundacionais.py`.
+- **O que de fato existe:** a bateria real vai até `script_17`, com nomes/escopos diferentes dos planejados:
+  - A matriz de sensibilidade (§1.4) e a reconstrução de vazão (§1.5), previstas como um único `script_00b`, viraram dois scripts separados no fim da numeração: `script_16_reconstrucao_vazao.py` e `script_17_matriz_sensibilidade.py`.
+  - O `script_00b` real (`script_00b_analise_censura_bod.py`) é outro script, não previsto no plano — diagnóstico de censura do BOD.
+  - `script_01b_analises_anuais.py` **não foi implementado** como script dedicado; a agregação anual aparece só como item 5 dentro de `script_17`. Janela móvel, tendência recursiva e piecewise (§3.e) **não foram implementados**.
+  - `script_06/07/08` do plano (WRTDS/balanço de massa, GAM/DLM/quantílica, ARIMAX de intervenção/SVR/fundacionais) **não foram implementados** com esse conteúdo — os `script_06/07/08` reais são correlação TDS-Amônia-BOD, diagnóstico de estrutura da série e baselines, respectivamente.
+  - A bateria ganhou 9 scripts adicionais sem equivalente no plano original (`script_09` a `script_17`: SVR/GP, detrend+árvore, SARIMAX multivariado com Cloreto, híbrido SARIMA+Prophet, LSTM, diagnóstico de resíduos, síntese final, reconstrução de vazão, matriz de sensibilidade).
+  - A variante JAX/CUDA da regressão bayesiana, prevista no plano para `script_05`, **não foi configurada** — roda em PyMC/NUTS puro CPU.
+- **Implicação:** os métodos WRTDS (f.1), balanço de massa (f.2), cenários (f.3) e GAM (f.5) — que motivaram a Etapa 3 desta sessão — **ainda não existem no repositório**, apesar do plano original prevê-los desde `script_06/07`. A Etapa 3 (`docs_local/03_prompts/prompt_tratamento_e_metodos.md`) parte dessa lacuna real, não de um retrabalho.
+- **Alternativas descartadas:** renumerar os scripts existentes para bater com o plano original — descartada por ser puramente cosmética e arriscar quebrar referências já existentes no notebook/MLflow/artigo.
+- **Evidência:** comparação direta entre `docs_local/02_governanca/plano_projeto_TDS.md` §4 e os arquivos `script_*.py` presentes no repositório; relatório de leitura desta sessão.
+
+### D-37 — Os ciclos de TDS são explicados por ciclos de seca (PDSI) ⭐ confirma D-14
+- **Data:** 2026-08-14 · **Status:** Decidida (Passo 1 de `docs_local/03_prompts/prompt_pdsi_regimes.md`)
+- **Contexto:** D-14 propôs que os ciclos de TDS acompanham secas, mas não tinha sido testado com uma variável de seca independente. D-29/D-30 apontavam a lacuna (TDS da água de origem ausente do dataset) e sugeriam o PDSI como proxy climático.
+- **Dados:** PDSI mensal do NOAA NCEI nClimDiv (`climdiv-pdsidv`/`climdiv-pdsist`, versão `v1.0.0-20260806`, 1895-2026), três séries — California estadual (código `004005`), divisão climática 6/Los Angeles (código `040605`, contém o condado de LA, FIPS 06037 → `county-to-climdivs.txt` linha `06037 04037 0406`) e divisão 2/Sacramento (código `040205`, contém Sacramento e Butte/Oroville — origem do State Water Project, FIPS 06067/06007 → `0402`). Códigos confirmados na documentação oficial (`state-readme.txt`, `divisional-readme.txt`, `county-to-climdivs.txt`), não assumidos. Salvos como `pdsi_california_estadual.csv`, `pdsi_los_angeles_divisao.csv`, `pdsi_sacramento_divisao.csv`.
+- **Resultado — desfecho 1 dos 3 possíveis (`docs_local/03_prompts/prompt_pdsi_regimes.md` Etapa 3): "PDSI explica bem os ciclos"**, com uma ressalva importante:
+  - **Correlação com defasagem (0-36 meses), corrigida por graus de liberdade efetivos (Pyper & Peterman 1998, mesma armadilha de D-15):** correlação bruta forte e altamente significativa em defasagem curta — California estadual r=−0,651 (lag=4m, p=0,0003, n_efetivo=26,3 de 178 nominais), LA divisão 6 r=−0,526 (lag=3m, p=0,0126), Sacramento divisão 2 r=−0,563 (lag=4m, p=0,0012). **Ressalva honesta:** a correlação sobre as séries diferenciadas (destendenciadas) cai bastante e **inverte de sinal** (r=+0,15 a +0,19, p entre 0,014 e 0,055) — a relação forte é sobretudo de nível/regime (a mesma informação que já embasa D-14), não uma sincronia mês a mês fina. Isso é reportado como resultado, não escondido.
+  - **Changepoints no PDSI, detectados de forma independente (segmentação binária recursiva com o teste de Pettitt de `script_07`, sem informar as datas do TDS ao algoritmo):** das 4 viradas esperadas (2012, 2015, 2019, 2022), a série da divisão de Los Angeles bate as 4 dentro de ~4-6 meses; California estadual bate 3 de 4 dentro de ~7-10 meses (a virada de 2012 fica a ~15 meses, fora do critério de 12 meses); Sacramento bate as 4 dentro de ~3-9 meses. **Nenhum alinhamento foi forçado** — os changepoints vieram de um algoritmo cego às datas do TDS.
+  - **Decomposição LMG (PDSI defasado × vazão reconstruída, `TDS ~ PDSI_lag + vazão`):** LMG do PDSI = 79,3% (California estadual), 67,5% (LA divisão 6), 72,6% (Sacramento divisão 2) — mesma ordem de grandeza do benchmark SCSC/DBS&A (~88% água de origem / ~12% consumo per capita, D-29), confirmando que o driver dominante não é a vazão local isolada. Ambos os coeficientes (PDSI e vazão) são significativos (p<0,0001) nas 3 séries — os dois mecanismos contribuem, mas o climático pesa mais.
+  - **Regressão por regime (5 dummies de período + PDSI):** o coeficiente do PDSI continua altamente significativo (p<0,0001) mesmo controlando por regime nas 3 séries — o efeito **não é** inteiramente absorvido pelas dummies de período, ou seja, o PDSI carrega informação além de só marcar "qual dos 5 blocos temporais".
+- **Interpretação honesta (sem escolher a leitura que "salva" a hipótese):** o padrão cíclico de D-14 tem sustentação empírica real e não-forçada — nível/regime do PDSI explica a maior parte, e o algoritmo de changepoint (cego às datas do TDS) recupera as mesmas viradas. Mas a sincronia fina mês a mês é mais fraca e de sinal invertido, então "seca explica os ciclos" é verdadeiro no nível de regime/período, não como um mecanismo de resposta imediata bem calibrado em alta frequência. Isso é consistente com D-29 (tempo de trânsito/mistura da água importada) e não deve ser lido como mais forte do que os números sustentam.
+- **Alternativas descartadas:** usar só a correlação contemporânea (lag=0) — descartada porque subestimaria a relação real (justificativa do próprio prompt: tempo de trânsito da água importada); usar `ruptures` para changepoint — pacote não instalado nesta sessão, optou-se por reaproveitar a implementação de Pettitt já existente em `script_07` via segmentação binária recursiva, evitando dependência nova para um teste que já tinha implementação própria validada no projeto.
+- **Evidência:** `script_18_pdsi_regimes.py`; `pdsi_regimes_resultados.csv`/`.json`; `docs_local/01_manuscrito/Artigo/images/pdsi-vs-tds-regimes.png`; `docs_local/01_manuscrito/Artigo/images/pdsi-tds-correlacao-defasagem.png`; run MLflow `pdsi_regimes`.
+
+## Pendências de registro
+
+- [x] Decisões tomadas dentro de cada `script_01` a `script_17` (escolha de hiperparâmetros, ordem SARIMA, features, seeds) — ver D-33.
+- [x] Justificativa da escolha de holdout/CV adotada — ver D-32.
+- [x] Métodos que falharam ou não convergiram (resultado negativo também é resultado) — ver D-34.
+- [x] Decisão sobre quais modelos entram como finalistas na síntese — ver D-35.
+- [x] Confirmação ou reversão de D-14 (regime cíclico) após a checagem vazão-vs-seca — ver D-31 (confirmada, com ressalva).
+- [x] Desvios da estrutura de scripts em relação ao plano original — ver D-36 (não previsto na lista original de pendências, mas descoberto durante o preenchimento desta seção).
+
+### D-38 — Primeira compilação real do artigo: `\text{}`/`\mathrm{}` com acento quebra o PDF (amsmath ausente)
+- **Data:** 2026-08-14 · **Status:** Decidida (correção de bug de compilação, não decisão metodológica)
+- **Contexto:** `docs_local/03_prompts/prompt_compilar_artigo.md` — TeX Live estava instalado (`C:\texlive\2026\bin\windows\`, fora do `PATH` do shell), não ausente como a sessão anterior concluiu por engano; essa foi a primeira compilação real desde as edições em D-13/D-14/D-31/D-37 (fórmula da identidade `lb/dia = mg/L × vazão × 8,34` inserida em `conclusao.tex`, `metodologia.tex` e `resultados.tex`).
+- **Erro encontrado:** `template.tex` nunca carregou `\usepackage{amsmath}` — então `\text{}` (usado em `conclusao.tex`) é um comando indefinido (`Undefined control sequence`), e mesmo `\mathrm{}` (usado em `metodologia.tex`/`resultados.tex`) falha ao conter a palavra acentuada `vazão` dentro de modo matemático (`Please use \mathaccent for accents in math mode` — CM/OT1 não compõe `ã` corretamente dentro de fórmula).
+- **Decisão:** (1) adicionar `\usepackage{amsmath}` a `template.tex`; (2) remover o acento nas 3 ocorrências de `vazão` dentro de `$...$`/`\mathrm{}`/`\text{}` (viraram `vazao`, sem acento, só dentro da fórmula — o texto em prosa ao redor continua acentuado normalmente).
+- **Alternativas descartadas:** envolver a palavra em `\text{}` sem `amsmath` carregado — não resolve, é a própria causa; usar `\mbox{}` em vez de corrigir o acento — mais invasivo, a correção mínima (remover o acento só dentro da fórmula) resolve sem mudar a leitura da equação.
+- **Resultado da recompilação:** ciclo completo (`pdflatex → bibtex → pdflatex → pdflatex`) roda limpo — 0 `Undefined control sequence`, 0 citação/referência não resolvida, as 17 figuras referenciadas em `resultados.tex` todas embutidas, bibliografia com 3 referências numeradas (nenhum `[?]`), 22 páginas, 6 seções na ordem correta (abstract → introdução → trabalhos relacionados → metodologia → resultados → conclusão). `Overfull \hbox` presentes (esperado em layout de duas colunas com tabelas largas) mas não impedem a compilação nem cortam conteúdo visível. **Nota: contagem válida apenas no momento desta entrada** — D-39/D-40/D-41 adicionaram 6 figuras e novas seções; a contagem atual (verificar com `pdfinfo docs_local/01_manuscrito/Artigo/template.pdf`) é 25 páginas / 23 figuras.
+- **Achado colateral, fora do escopo desta correção:** a página de título ainda tem os placeholders `Título do documento` / `Autor A1, Autor B1 e Autor C1` (nunca preenchidos com o título real e os autores reais) — registrado aqui para não ser esquecido, não corrigido nesta execução por não ter essa informação.
+- **Evidência:** `docs_local/01_manuscrito/Artigo/template.tex`, `docs_local/01_manuscrito/Artigo/src/conclusao.tex`, `docs_local/01_manuscrito/Artigo/src/resultados.tex`, `docs_local/01_manuscrito/Artigo/template.pdf` (recompilado), `docs_local/01_manuscrito/Artigo/template.log`.
+- **Nota de troubleshooting (2026-08-14, pós-D-38):** o mesmo bug se repetiu uma segunda vez nesta sessão — depois de corrigido em `conclusao.tex`/`resultados.tex` e de uma varredura por regex, novas ocorrências apareceram em `metodologia.tex`/`resultados.tex` (linhas 69, 75, 393) porque foram **escritas depois** da varredura, ao redigir as seções de WRTDS/balanço de massa (D-39/D-40). A causa raiz não é um arquivo específico, é um padrão de escrita: **qualquer palavra acentuada dentro de `\mathrm{}`, `\text{}` ou `\log(\mathrm{})` em modo matemático (`$...$`) quebra a compilação**, mesmo com `amsmath` carregado. Regra prática para evitar uma terceira ocorrência: ao escrever uma fórmula nova, usar sempre a forma sem acento dentro do `$...$` (ex. `vazao`, não `vazão`) — o texto em prosa ao redor pode continuar acentuado normalmente. Não é algo que uma varredura pontual resolve de vez, porque cada nova fórmula escrita no futuro pode reintroduzir o problema.
+- **Nota de processo (2026-08-19, pós-auditoria):** o commit `3c53d70` (WRTDS/balanço/cenários) atualizou `DECISOES.md`, `docs_local/02_governanca/GLOSSARIO.md`, `docs_local/02_governanca/ESCOPO_E_LIMITACOES.md`, o notebook e o artigo — mas não os READMEs, apesar da instrução explícita de atualizá-los "na mesma execução" (`docs_local/03_prompts/prompt_wrtds_balanco_cenarios.md`). O gap só foi pego numa auditoria de deriva posterior (ver commit `a8a6920`). Causa raiz: ao atualizar vários documentos na mesma execução, não há verificação automática de que todos os arquivos exigidos foram de fato tocados — só a lista de intenção no prompt. Regra prática: ao fechar uma execução que envolve "atualizar N documentos", conferir com `git show --stat <commit>` (ou `git status` antes de commitar) que todos os N aparecem na lista, não confiar só em lembrar de cada um.
+
+### D-39 — WRTDS confirma: não há tendência de TDS depois de descontar a vazão
+- **Data:** 2026-08-14 · **Status:** Decidida (`docs_local/03_prompts/prompt_wrtds_balanco_cenarios.md`, Tarefa 1)
+- **Contexto:** D-37 mudou a pergunta de tendência de "há tendência de alta?" para "há tendência POR BAIXO dos ciclos, depois de descontar o efeito da vazão?" — exatamente o que a normalização por vazão do WRTDS responde.
+- **Implementação:** própria (`script_19_wrtds.py`), não o pacote R `EGRET` (sem equivalente Python maduro) — regressão ponderada localmente de `log(TDS)` sobre tempo, `log(vazão)` e sazonalidade (kernel tricúbico, janelas fixas: tempo±7a, log(vazão)±2, sazonal±0,5 — mesmos defaults do EGRET, exceto que aqui as janelas **não** se expandem adaptativamente quando poucos pontos têm peso, simplificação declarada). Flow-normalização = média da predição sobre toda a distribuição histórica de vazão em cada instante.
+- **Resultado:** tendência bruta (log TDS) = +0,582%/ano (p=0,0056, significativa) → tendência **flow-normalized** = −0,133%/ano (**p=0,064, não significativa**). Ou seja: quase toda a "tendência" aparente desaparece ao descontar o efeito da vazão — consistente com D-37/D-31 (o padrão é dirigido por ciclos de vazão/seca, não por uma tendência de longo prazo independente).
+- **Checagem de circularidade (obrigatória, feita antes de aceitar o resultado):** a vazão padrão (`vazao_mgd_TDS`) foi derivada do próprio TDS (D-12) — repetiu-se todo o procedimento com `vazao_mgd_Chloride` (série independente). Resultado: −0,158%/ano (p=0,033), correlação entre as duas séries flow-normalized r=0,998 (p≈5×10⁻²²⁰), diferença de apenas 0,024 pontos percentuais/ano entre as duas versões. **A circularidade não invalida o achado** — as duas vazões (dependente e independente do TDS) levam à mesma conclusão qualitativa.
+- **Adaptação de contexto declarada:** WRTDS foi desenhado para rios (vazão = hidrologia); aqui "vazão" é vazão de efluente (dirigida por consumo/conservação). A matemática se aplica, a interpretação é diferente — registrado explicitamente na metodologia do artigo.
+- **Alternativas descartadas:** usar `rpy2` para chamar o `EGRET` real em R — descartado por adicionar uma dependência de sistema pesada (R + pacotes) para um ganho marginal sobre a implementação própria, que já reproduz o mecanismo central (regressão ponderada 3D + integração sobre a distribuição de vazão) e foi validada contra circularidade.
+- **Evidência:** `script_19_wrtds.py`; `wrtds_resultados.csv`/`.json`; `docs_local/01_manuscrito/Artigo/images/wrtds-flow-normalized.png`, `wrtds-circularidade.png`; linha `wrtds_flow_normalized` em `resultados_comparacao.csv`.
+
+### D-40 — Balanço de massa confirma diluição, não mais sal — mas extrapolação linear dos componentes é fisicamente implausível
+- **Data:** 2026-08-14 · **Status:** Decidida (`docs_local/03_prompts/prompt_wrtds_balanco_cenarios.md`, Tarefa 2)
+- **Contexto:** pergunta central — a carga de sal está estável/caindo enquanto a vazão cai (diluição) ou a carga também sobe (mais sal)?
+- **Dados:** carga de sal (lb/dia) obtida **diretamente** da linha "Monthly Average (Mean)" em lb/dia do `TDS.csv` (não derivada de vazão alguma — evita um segundo ponto de circularidade). Vazão usada no modelo principal: `vazao_mgd_Chloride` (independente do TDS), pelo mesmo motivo de D-39.
+- **Resultado:** carga de sal cai −3,20%/ano (p<0,0001); vazão cai −3,85%/ano (p<0,0001) → **confirma o mecanismo de diluição** (menos água, carga de sal estável/em leve queda, não mais sal entrando no sistema).
+- **Validação histórica (não-circular):** `TDS_previsto = carga ÷ (vazão_Cloreto × 8,34)` vs. TDS observado: RMSE=19,1 mg/L, r=0,973, R²=0,941 — forte.
+- **Checagem de tautologia (exigida pelo prompt, feita explicitamente):** repetindo com `vazao_mgd_TDS` (a vazão derivada do próprio TDS), R²=1,000000 exato — confirma que essa versão é uma identidade algébrica por construção (`vazão_mgd_TDS ≡ carga_TDS/(TDS_mgL×8,34)`), **não uma validação**. Reportado como checagem, não como resultado.
+- **⚠️ Achado negativo, registrado e não escondido:** a extrapolação linear (Theil-Sen) de carga e vazão para +10/+15/+20 anos cruza valores fisicamente implausíveis — a vazão projetada cai para 14% da capacidade nominal em +10a, 5% em +15a, e **fica negativa** em +20a. O TDS derivado dessas projeções (993 → 1.724 → 1.557 mg/L, não-monotônico) não deve ser lido como previsão confiável. Isso não contradiz o achado da diluição (que é sobre o período histórico, robusto); contradiz apenas a ideia de extrapolar essa reta por décadas.
+- **Decisão:** não forçar um piso arbitrário "razoável" na vazão projetada (seria inventar um número) — reportar a implausibilidade como está, e resolver com cenários condicionados a faixas historicamente observadas (D-41/`script_21`), não com uma correção ad-hoc da extrapolação linear.
+- **Adaptação da forma do SCSC:** sem população nem TDS de origem (D-30), a forma usada é a identidade física direta `TDS = carga/(vazão×8,34)`, sem o termo per-capita do modelo do SCSC (`TDS_origem + SML×pop/vazão`) — declarado como adaptação, não substituição equivalente.
+- **Evidência:** `script_20_balanco_massa.py`; `balanco_massa_resultados.csv`/`.json`; `docs_local/01_manuscrito/Artigo/images/balanco-massa-decomposicao.png`, `balanco-massa-validacao.png`; linha `balanco_massa` em `resultados_comparacao.csv`.
+
+### D-41 — Projeção por cenários climáticos substitui a previsão pontual de longo prazo
+- **Data:** 2026-08-14 · **Status:** Decidida (`docs_local/03_prompts/prompt_wrtds_balanco_cenarios.md`, Tarefa 3)
+- **Contexto:** decorre diretamente de D-40 — extrapolar componentes linearmente por 20 anos não é sustentável fisicamente numa série dirigida por ciclos de seca (D-37/D-14).
+- **Método:** AR(1) ajustado no PDSI histórico completo (1895-2026, série California estadual, a de maior LMG% em D-37): μ=−0,31, φ=0,894, resid\_std=1,08. Regressão `TDS ~ PDSI(lag=4 meses, mesmo lag de D-37)`: coef=−20,4 (se=1,70), R²=0,445. Quatro cenários simulados pelo **mesmo** AR(1) ajustado, só mudando a média-alvo: seco (P10 histórico), normal (média histórica), úmido (P90 histórico), agravamento climático (média deslizando linearmente de histórica para P10 ao longo de 20 anos). Monte Carlo com 2.000 simulações por cenário, propagando incerteza do coeficiente da regressão + ruído residual + variabilidade do PDSI simulado.
+- **Resultado — faixas de TDS por cenário em +20 anos (mediana [P5, P95], mg/L):** seco 718 [588, 846]; normal 658 [529, 783]; úmido 594 [462, 721]; agravamento climático 714 [591, 842] (converge para perto do cenário seco, como esperado pela definição da rampa). Todas as faixas são fisicamente plausíveis (diferente da extrapolação linear de D-40) porque o PDSI é limitado à distribuição historicamente observada, não extrapolado ao infinito.
+- **Alternativas descartadas:** projetar PDSI com tendência própria (ao contrário de mean-reverting) — descartada porque o PDSI é calibrado para ser aproximadamente estacionário por construção (Palmer, 1965); assumir independência entre meses (sem AR(1)) — descartada porque subestimaria a persistência real de secas/períodos úmidos, já documentada na literatura (PDSI mensal não captura secas com duração menor que ~12 meses, ver `docs_local/02_governanca/GLOSSARIO.md`).
+- **Limitação declarada:** a incerteza de reconstrução do próprio PDSI (erro de medição/interpolação do nClimDiv) não é propagada — só incerteza do coeficiente da regressão, ruído residual e variabilidade do PDSI simulado.
+- **Evidência:** `script_21_cenarios.py`; `cenarios_resultados.csv`/`.json`; `docs_local/01_manuscrito/Artigo/images/cenarios-pdsi-fanchart.png`, `cenarios-pdsi-horizontes.png`; linhas `cenario_pdsi_*` em `resultados_comparacao.csv`.
+
+### D-42 — Reconciliação: o que cada família de método responde (não há contradição a registrar)
+- **Data:** 2026-08-14 · **Status:** Decidida
+- **Contexto:** `docs_local/03_prompts/prompt_wrtds_balanco_cenarios.md` pedia registrar explicitamente se algum resultado novo contradissesse um anterior.
+- **Verificação:** os métodos de tendência/ML de `script_01`-`script_15` (finalistas ~760-800 mg/L em +20a, Seção "Síntese final") **não são substituídos** por D-39/D-40/D-41 — respondem a uma pergunta diferente (desempenho preditivo de curto prazo e magnitude da tendência bruta, sem descontar vazão). WRTDS (D-39) responde "há tendência sob os ciclos?" (não, uma vez descontada a vazão). Balanço de massa (D-40) responde "diluição ou mais sal?" (diluição). Cenários (D-41) respondem "faixa plausível condicionada ao clima?" (594-718 mg/L em +20a, dependendo do cenário). **Não há contradição factual entre as famílias** — os finalistas de `script_15` preveem a série bruta (que inclui o efeito da vazão); D-39-D-41 decompõem essa mesma série. As faixas de cenário (594-718) ficam **abaixo** dos finalistas de tendência bruta (~760-800) porque a vazão média projetada pelos cenários (baseada em PDSI historicamente plausível) é mais alta do que a implícita numa extrapolação linear de tendência — coerente com D-40 ter descartado a extrapolação linear por implausibilidade física.
+- **Evidência:** `resultados_comparacao.csv` (todas as linhas coexistem, nenhuma sobrescrita).
+
+### D-43 — Escopo final da bateria de métodos: itens do plano original não implementados
+- **Data:** 2026-08-19 · **Status:** **Decidida** (2026-08-25 — usuário optou por continuar implementando, não fechar o escopo)
+- **Contexto:** `docs_local/02_governanca/plano_projeto_TDS.md` §3.f previa 9 métodos adicionais. WRTDS (D-39), balanço de massa (D-40) e cenários (D-41) já estavam prontos. **Correção de um erro factual desta própria entrada**: f.8 (SVR) já estava implementado desde `script_09_svr_gp.py` (parte do bloco "métodos adicionais" anterior à Etapa 3) — a frase original "os demais (GAM incluído) não [foram implementados]" estava errada quanto ao SVR especificamente; ele sempre esteve na bateria (`metodo == "svr"` em `resultados_comparacao.csv`).
+- **Decisão:** continuar a bateria com os itens genuinamente faltantes: f.4 (espaço de estados/DLM), f.5 (GAM), f.6 (regressão quantílica), f.7 (análise de intervenção/ARIMAX com eventos), f.9 (modelos fundacionais). Ver D-45 a D-49 para o resultado de cada um.
+- **Alternativa descartada:** fechar o escopo em WRTDS/balanço/cenários — descartada pelo usuário; não tomei essa decisão por conta própria.
+- **Evidência:** `docs_local/02_governanca/plano_projeto_TDS.md` §3.f; `script_09_svr_gp.py`; `script_22` a `script_26` (novos, ver entradas seguintes).
+
+### D-44 — Mover `prompt_*.md` para `docs_local/03_prompts/`
+- **Data:** 2026-08-19 · **Status:** Decidida (achado de auditoria de deriva, `auditoria-projeto`)
+- **Contexto:** 10 arquivos `prompt_*.md` acumulados na raiz do projeto ao longo da sessão, cada um a instrução exata usada numa fase — nenhum reaproveitado depois de executado, só consultado por referência histórica.
+- **Decisão:** mover os 10 para `docs_local/03_prompts/`, mesmo nome, e atualizar toda referência cruzada (`docs_local/01_manuscrito/Artigo/DECISOES.md`, `README.md`/`README.pt-br.md`, `docs_local/02_governanca/plano_projeto_TDS.md`, `CLAUDE.md`, entre os próprios prompts) para o caminho `docs_local/03_prompts/prompt_xxx.md`.
+- **Alternativas descartadas:** *apagar* — descartada porque são a proveniência real de cada decisão registrada em `DECISOES.md` (ex. D-39/40/41 citam `docs_local/03_prompts/prompt_wrtds_balanco_cenarios.md` diretamente); apagar quebraria a rastreabilidade que o projeto preza. *Deixar na raiz* — descartada por poluir o diretório raiz sem ganho, especialmente para quem abre o repositório pela primeira vez.
+- **Evidência:** `docs_local/02_governanca/plano_projeto_TDS.md` §9; commit `1ffec1f`.
+
+### D-45 — Espaço de estados / DLM (f.4): tendência variável no tempo, sem ganho sobre a bateria existente
+- **Data:** 2026-08-25 · **Status:** Decidida
+- **Contexto:** `docs_local/02_governanca/plano_projeto_TDS.md` §3.f.4 — `statsmodels.UnobservedComponents`, tendência local + sazonal via filtro de Kalman, com incerteza nativa (não aproximada).
+- **Decisão/implementação:** duas especificações testadas (`local level`, `local linear trend` + sazonal período 12), escolhida por AIC — `local linear trend` venceu (AIC 1845,6 vs. 1851,6).
+- **Resultado:** a variância do termo sazonal estocástico ficou ~0 (6,2×10⁻⁷) — sazonalidade fraca, consistente com `script_07` (Fs=0,25). A variância do estado de tendência (`sigma2.trend`) também ficou ~0 (2×10⁻⁹, p=1,000) — ou seja, apesar de "local linear trend" permitir uma inclinação que muda no tempo, o ajuste convergiu para uma inclinação **efetivamente constante**, não variável. Tendência média do estado: +8,33 mg/L/ano. Holdout: RMSE=50,16, R²=−0,60, MASE=0,52 (não bate o naive, 0,44). Previsão +20a: 868,4 mg/L, IC90 nativo [−36,8, 1773,6] — largura de 1.810 mg/L, a mais larga da bateria, refletindo honestamente a incerteza de extrapolar 20 anos com um modelo cujo próprio estado de tendência não encontrou evidência de variar.
+- **Leitura honesta:** o método não trouxe o diferencial esperado (tendência genuinamente variável no tempo) — os dados não sustentam uma tendência estocástica distinguível de uma constante, mesmo dando ao modelo a liberdade de variar. Isso é consistente com D-39 (WRTDS): não há tendência residual clara além do efeito de vazão/regime.
+- **Evidência:** `script_22_espaco_estados.py`; linha `espaco_estados_dlm` em `resultados_comparacao.csv`; `docs_local/01_manuscrito/Artigo/images/espaco-estados-tds.png`.
+
+### D-46 — GAM (f.5): patologia de extrapolação de P-spline sob GCV irrestrito, corrigida com piso declarado no lambda
+- **Data:** 2026-08-25 · **Status:** Decidida
+- **Contexto:** `docs_local/02_governanca/plano_projeto_TDS.md` §3.f.5 — `pyGAM`, `TDS ~ s(tempo) + s(mês)` com termo sazonal cíclico (`basis='cp'`, disponível na versão instalada — sem necessidade do fallback P-spline comum previsto).
+- **Achado de instabilidade, tratado como decisão metodológica, não escondido:** minimizar GCV sem restrição escolhe λ≈0,001 para o termo de tendência — ótimo em ajuste in-sample, mas produz extrapolação **explosiva**: 1.910 mg/L em +10 anos (quase 3× o último valor observado), uma patologia conhecida de P-splines (GCV não penaliza o comportamento da derivada fora do intervalo observado).
+- **Decisão:** restringir a busca de λ do termo de tendência a ≥ 1,0 (ainda escolhido por GCV dentro dessa faixa, não fixado arbitrariamente). Resultado com o piso: λ=1,0 (tendência) e λ=1.000 (sazonal, no teto da grade — o termo sazonal colapsa para quase-linear, mesma leitura de sazonalidade fraca de D-45/`script_07`). Previsão +10a: 576,5 mg/L; +20a: 465,1 mg/L (tendência de queda no longo prazo, IC90 [173,2, 756,9]). Holdout: RMSE=61,87, R²=−1,44, MASE=0,68.
+- **Alternativas descartadas:** aceitar o λ ótimo por GCV puro — descartada por produzir extrapolação fisicamente implausível; fixar λ arbitrariamente alto (suavização máxima) — descartada por jogar fora informação real de curvatura; a faixa "≥1,0, ainda escolhida por GCV" é o meio-termo declarado.
+- **Evidência:** `script_23_gam.py` (funções `ajustar_gam`, `diagnosticar_instabilidade_sem_restricao`); linha `gam` em `resultados_comparacao.csv`; `docs_local/01_manuscrito/Artigo/images/gam-tds.png`.
+
+### D-47 — Regressão quantílica (f.6): os picos (P90) NÃO sobem mais rápido que a mediana — e cruzam ao extrapolar
+- **Data:** 2026-08-25 · **Status:** Decidida
+- **Contexto:** `docs_local/02_governanca/plano_projeto_TDS.md` §3.f.6 — `statsmodels.QuantReg`, `TDS ~ tempo` para Q10/Q50/Q90, testando se os limites regulatórios (que incidem sobre máximos, não médias) sobem mais rápido que a tendência central.
+- **Resultado, direção oposta à hipótese de trabalho:** inclinação Q10 = +4,36 mg/L/ano (p=0,016); Q50 = +3,49 (p=0,077, não significativa a 5%); **Q90 = −3,05 mg/L/ano (p=0,026, significativa, e de SINAL NEGATIVO)**. Ou seja: os meses de TDS mais baixo (Q10) sobem, a mediana sobe fracamente, e os picos (Q90) na verdade **caem** ao longo do tempo — o oposto da preocupação regulatória que motivou testar isso.
+- **Achado técnico declarado, não escondido:** como os três quantis são ajustados de forma independente (sem restrição de monotonicidade) e têm inclinações de sinais opostos, a extrapolação **cruza** nos três horizontes — em +20a, Q90 previsto (709,1) fica **abaixo** de Q50 (794,8), violando Q10≤Q50≤Q90. Isso não invalida a leitura para o período histórico (onde a ordem vale por definição, os dados são reais), mas é uma limitação real de extrapolar retas quantílicas independentes em horizonte longo.
+- **Evidência:** `script_24_regressao_quantilica.py`; linhas `regressao_quantilica_q10/q50/q90` em `resultados_comparacao.csv`; `docs_local/01_manuscrito/Artigo/images/regressao-quantilica-tds.png`.
+
+### D-48 — Análise de intervenção / ARIMAX com eventos (f.7): seca não significativa controlando pela ordem de conservação; instabilidade na componente sazonal MA
+- **Data:** 2026-08-25 · **Status:** Decidida
+- **Contexto:** `docs_local/02_governanca/plano_projeto_TDS.md` §3.f.7 — SARIMAX(TDS, exog=[seca_2012_2016 (pulso), ordem_conservação_2015 (degrau permanente a partir de abr/2015)]), ordem SARIMA reaproveitada de `script_02` (mesma decisão de escopo de `script_11`).
+- **Resultado:** coeficiente da seca 2012-2016 = +48,58 mg/L, **não significativo** (p=0,206) controlando pela ordem de conservação; coeficiente da ordem de conservação = +92,82 mg/L, no limiar de significância (p=0,051). Holdout: RMSE=50,90, MASE=0,53 (não bate o naive).
+- **Achado técnico declarado:** o termo sazonal MA (`ma.S.L12`) convergiu para −1,0000 com erro-padrão de 404 (limite do espaço admissível, quase não-invertível) — sinal de instabilidade de estimação nessa componente específica, não de um efeito real preciso. Os coeficientes dos eventos continuam interpretáveis; a incerteza dessa componente sazonal deve ser lida com cautela.
+- **Premissas declaradas para a previsão futura:** regressores futuros fixados em seca=0 (não sabemos se haverá seca futura — premissa conservadora) e ordem de conservação=1 (assume-se que a política permanece em vigor). Previsão +20a: 807,1 mg/L, IC90 [−97,8, 1712,1].
+- **Leitura honesta:** diferente do que a inspeção visual sugeria (D-14/D-37), quando a seca entra como regressor explícito num SARIMAX controlando pela ordem de conservação, seu coeficiente isolado não atinge significância — o efeito da seca parece operar mais through o canal de vazão (D-39/D-40) do que como um "salto" direto de nível capturável por um regressor pulso simples.
+- **Evidência:** `script_25_intervencao_arimax.py`; linha `intervencao_arimax_eventos` em `resultados_comparacao.csv`; `docs_local/01_manuscrito/Artigo/images/intervencao-arimax-tds.png`.
+
+### D-49 — Modelo fundacional zero-shot (f.9): Chronos-Bolt não supera o naive, e sua incerteza não cresce com o horizonte
+- **Data:** 2026-08-25 · **Status:** Decidida
+- **Contexto:** `docs_local/02_governanca/plano_projeto_TDS.md` §3.f.9 — previsão zero-shot (sem treinar nos dados do projeto) com um modelo pré-treinado. Expectativa declarada **antes** de rodar: com ~180 pontos, é improvável que supere os métodos clássicos, mas o teste em si tem valor científico.
+- **Modelo usado:** Chronos-Bolt-Small (Amazon, pesos abertos, via `chronos-forecasting`/HuggingFace). **TimeGPT (Nixtla) não testado** — exige API paga, sem chave disponível nesta sessão. **TimesFM não testado** — redundante com Chronos para a pergunta de pesquisa (mais um representante zero-shot não adicionaria informação nova o suficiente para justificar o custo).
+- **Resultado — expectativa confirmada (resultado negativo, reportado como tal):** holdout RMSE=55,23, MASE=0,59 — não supera o naive (0,44), consistente com a expectativa declarada.
+- **Achado técnico declarado:** a largura do intervalo (Q10-Q90, não IC90 — limite nativo do modelo é IC80) **diminui** com o horizonte (216,7 mg/L em +10a → 137,8 em +20a) — contra-intuitivo frente aos demais métodos da bateria, cuja incerteza cresce. Característica observada de cabeças de previsão diretas/multi-horizonte (não autorregressivas): os quantis de cada horizonte são preditos conjuntamente a partir do mesmo contexto fixo, sem compor incerteza passo a passo como um SARIMA. Não é erro de implementação — é uma propriedade do modelo, e mais um motivo para não usá-lo isoladamente como finalista de longo prazo.
+- **Nota de rotulagem:** as colunas `ci90_low_*`/`ci90_high_*` deste método em `resultados_comparacao.csv` seguem a convenção de nome da tabela por consistência estrutural, mas **são IC80 (Q10-Q90), não IC90** — declarado aqui e no próprio script, para não induzir comparação direta enganosa com os IC90 reais dos outros métodos.
+- **Evidência:** `script_26_modelos_fundacionais.py`; linha `chronos_bolt_zero_shot` em `resultados_comparacao.csv`; `docs_local/01_manuscrito/Artigo/images/modelos-fundacionais-tds.png`.
+
+### D-50 — Fechamento da seção 3.f do plano: bateria completa em 34 métodos
+- **Data:** 2026-08-25 · **Status:** Decidida
+- **Contexto:** decorre de D-43 (usuário optou por continuar implementando em vez de fechar o escopo) e D-45 a D-49 (os 5 métodos que faltavam).
+- **Decisão:** a seção 3.f do plano original está agora 100% implementada (9 de 9 itens: WRTDS, balanço de massa, cenários, espaço de estados, GAM, regressão quantílica, análise de intervenção, SVR — já existente desde `script_09` —, modelos fundacionais). `resultados_comparacao.csv` passa de 27 para 34 métodos.
+- **Síntese do que os 5 métodos novos acrescentam à mensagem central do projeto:** nenhum deles contradiz D-14/D-37/D-39/D-40 — pelo contrário, reforçam de ângulos independentes que (a) não há evidência clara de tendência residual além do efeito de vazão/regime (D-45, espaço de estados: variância do estado de tendência ~0; D-48, ARIMAX: seca não significativa isoladamente); (b) extrapolação de longo prazo é estruturalmente frágil em múltiplas famílias de método, não só nas já conhecidas (D-46, GAM: extrapolação explosiva sob GCV puro; D-47, regressão quantílica: cruzamento de quantis); (c) um modelo pré-treinado genérico não compensa a falta de dados específicos do domínio (D-49, Chronos-Bolt não supera o naive, como esperado).
+- **Pendência que NÃO foi resolvida por esta rodada, registrada para não ser esquecida:** nenhum dos 34 métodos foi re-treinado especificamente sob o enquadramento cíclico/de regime confirmado em D-37 — a bateria completa (exceto WRTDS/balanço/cenários) ainda assume implicitamente uma dinâmica de tendência contínua, não ciclos de seca. Isso já estava registrado em D-43/limitação (k) de `docs_local/01_manuscrito/Artigo/src/conclusao.tex` e continua válido.
+- **Evidência:** `resultados_comparacao.csv` (34 métodos); `script_22` a `script_26`.
+
+### D-51 — Cenário climático fundamentado em projeção real (Cal-Adapt, RCP 8.5), complementando os 4 cenários históricos
+- **Data:** 2026-08-26 · **Status:** Decidida
+- **Contexto:** os 4 cenários de `script_21` (seco/normal/úmido/agravamento climático) são fundamentados em reamostragem da distribuição *histórica* do PDSI (1895-2026), não em projeções de modelo climático real. Pesquisa dedicada (`docs_local/06_aula_e_apoio/material_apoio_referencias.md`, verificação direta da API) mostrou que não existe um substituto "plug-and-play" com o mesmo escopo (índice de seca mensal, múltiplos cenários, horizonte de 20 anos, download em lote) — mas a API pública do Cal-Adapt (cal-adapt.org) oferece dado real e verificável: médias de 30 anos de precipitação projetada (ensemble de 32 modelos climáticos LOCA-downscaled) sob RCP 8.5.
+- **Método (calibração declarada, não um PDSI oficial):** (1) baixada a precipitação mensal histórica da Califórnia (NOAA NCEI nClimDiv, mesmo formato de `script_18`) e regredido o PDSI anual contra a anomalia percentual de precipitação anual (1961-2020, n=60, R²=0,642, coeficiente altamente significativo, p<0,0001) — relação empírica real, não assumida. (2) Baixados e inspecionados dois GeoTIFFs reais do Cal-Adapt (`pr_30yavg_ens32avg_historical_1961-1990` e `pr_30yavg_ens32avg_rcp85_2035-2064`), extraído o pixel no ponto da LAGWRP (34,1372°N, -118,27422°O) via aritmética de grade (bounding box + tamanho de pixel confirmados na própria API): precipitação de 1,244 mm/dia (histórico) cai para 1,216 mm/dia (RCP 8.5, 2035-2064) — mudança de apenas **-2,3%**, modesta. (3) Aplicada essa mudança na calibração do passo 1 para obter um "PDSI-alvo implícito sob RCP 8.5" de **-0,69** (levemente seco — entre o cenário "normal", μ=-0,31, e "seco", P10=-3,17). (4) Rodado o mesmo motor de Monte Carlo de `script_21` com esse alvo, como um **5º cenário** (`rcp85_caladapt`), não substituindo os 4 existentes.
+- **Resultado:** faixa de 662-670 mg/L nos três horizontes — **entre** os cenários "normal" (658 em +20a) e "seco"/"agravamento" (714-718 em +20a), sem explodir nem contradizer os 4 cenários já existentes. Isso é um resultado honesto e esperado, não forçado: a mudança de precipitação projetada para RCP 8.5 nesse ensemble é modesta (consistente com a incerteza conhecida das projeções de precipitação para a Califórnia, ao contrário de temperatura), então o cenário fundamentado em projeção real cai perto do "normal", não do "seco".
+- **Limitação declarada explicitamente:** o "PDSI-alvo implícito" **não é uma previsão oficial de PDSI** — PDSI depende também de temperatura e balanço hídrico do solo, não só de precipitação. É uma calibração empírica real (regressão com dados observados), não uma reprodução do algoritmo formal do PDSI. Além disso, RCP 8.5 é um cenário de emissões específico (o mais severo dos padrões, não uma média); não testamos RCP 4.5 nesta rodada.
+- **Alternativas descartadas:** tentar extrair uma série diária completa até 2046 diretamente da API (rota 1 do plano original) — descartada por exigir extração de pixel por milhares de requisições (uma por data, por modelo climático), desproporcional ao ganho frente à rota das médias de 30 anos; reconstruir um PDSI formal a partir de precipitação+temperatura brutas do Cal-Adapt — descartado por ser engenharia climática não trivial (o algoritmo PDSI depende de balanço hídrico de solo por camada), fora do escopo deste projeto.
+- **Evidência:** `script_27_cenario_climatico_caladapt.py`; `cenario_caladapt_resultados.json`; linha `cenario_pdsi_rcp85_caladapt` em `resultados_comparacao.csv`; `docs_local/01_manuscrito/Artigo/images/cenario-caladapt-rcp85.png`.
+
+### D-52 — Triagem por prioridade das fontes sem acesso completo, em vez de e-mail para todas
+- **Data:** 2026-08-26 · **Status:** Decidida
+- **Contexto:** `docs_local/06_aula_e_apoio/material_apoio_referencias.md` lista ~40 fontes de literatura só com abstract acessível (paywalled) ou sites de dados investigados. O usuário pediu a lista completa (link, referência, motivação) e um modelo de e-mail por artigo que precisaria de acesso, para tentar obter o texto completo diretamente com os autores.
+- **Decisão:** classificar as fontes em três níveis — alta prioridade (4 fontes que sustentam diretamente conclusões centrais: Schwabe et al. 2020, Wolfand et al. 2022, Tran/Schwabe et al. 2017, Tandfonline 2023), média prioridade (7 fontes de mecanismo biológico e comparação internacional) e baixa prioridade (~20 precedentes metodológicos de ML/estatística, sem ligação direta com uma conclusão do artigo) — e escrever e-mail individual só para as duas primeiras categorias; para a baixa prioridade, um único modelo de e-mail genérico reutilizável, para não gerar 20 e-mails quase idênticos de baixo retorno esperado.
+- **Alternativa descartada:** escrever um e-mail individual para todas as ~40 fontes — descartada por desproporção de esforço frente ao valor real (a maioria são precedentes de método, não fontes que mudariam uma conclusão do artigo), sem prejuízo para o usuário, que recebe a lista completa de qualquer forma e pode adaptar o modelo genérico a qualquer uma delas.
+- **Evidência:** `docs_local/06_aula_e_apoio/fontes_acesso_limitado_e_emails.md`.
+
+### D-53 — Acesso obtido a Porse et al. (2023) e novo número estadual verificado de vazão×TDS
+- **Data:** 2026-08-26 · **Status:** Decidida
+- **Contexto:** o usuário obteve e forneceu o PDF completo de Porse et al. (2023), "Adapting wastewater management systems in California for water conservation and climate change" (item 1.4/4 de `docs_local/06_aula_e_apoio/fontes_acesso_limitado_e_emails.md`) — artigo de acesso aberto (CC BY-NC-ND 4.0) que antes só tínhamos como link não verificado.
+- **Decisão:** ler o texto completo, extrair os achados quantitativos reais (sem inventar nada além do que está impresso no artigo), adicionar entrada bibtex real (`porse2023adapting`) e citar formalmente em `docs_local/01_manuscrito/Artigo/src/trabalhos-relacionados.tex`.
+- **Achado incorporado:** para 45 estações de tratamento do sul da Califórnia, a conservação de água ligada à seca de 2014-2016 causou queda de 6-10% na vazão de efluente e aumento de 5-12% no TDS do efluente (citação de Schwabe et al. 2020 e Tran et al. 2017 dentro do próprio artigo de Porse et al., não uma medição original deste último — mas agora citável com o número exato, coisa que não conseguimos com o texto de Wolfand et al., ver D-27). Também relatam que 63% das estações de tratamento pesquisadas na Califórnia relataram desafios de baixa vazão desde 2011, e documentam (Tabela 2) o mesmo mecanismo de diluição para DBO/SST conforme o uso de água indoor per capita caiu de 125→50→37 gpcd entre 1970-2010.
+- **Efeito sobre o projeto:** fortalece a seção de trabalhos relacionados com um número estadual real e citável, sem substituir nem inventar o número de Wolfand et al. (que segue como pendência separada, D-27). Não muda nenhuma conclusão do trabalho — é evidência de apoio à generalização do mecanismo de diluição já estabelecido nas seções de metodologia/resultados.
+- **Alternativas descartadas:** nenhuma — é incorporação direta de uma fonte primária agora acessível, sem decisão metodológica alternativa envolvida.
+- **Evidência:** `docs_local/04_literatura/Adapting wastewater management systems in California for water conservation and climate change.pdf` (fornecido pelo usuário); `docs_local/01_manuscrito/Artigo/refs.bib` (`porse2023adapting`); `docs_local/01_manuscrito/Artigo/src/trabalhos-relacionados.tex`; `docs_local/06_aula_e_apoio/material_apoio_referencias.md` §1.4.
+
+### D-55 — Padrão recorrente: prosa de status desatualizada ("ainda não implementado") sobrevivendo à conclusão do trabalho
+- **Data:** 2026-09-03 · **Status:** Decidida (achado de `/auditoria-projeto` + `/varredura-de-padrao`)
+- **Contexto:** a auditoria de projeto encontrou README.md/README.pt-br.md se autocontradizendo (uma frase dizia "100% implementado", outra 6 linhas depois dizia "ainda não implementado, decisão de escopo em aberto") e o mesmo em `docs_local/02_governanca/RESUMO_EXECUTIVO_DECISOES.md`. A varredura de padrão generalizou isso e buscou no projeto inteiro.
+- **Padrão generalizado:** texto narrativo afirmando que um item ("pipeline", "método X", "git repo", "N placeholders no refs.bib") "ainda não foi implementado/escrito/inicializado", escrito no início do projeto ou antes de uma etapa ser concluída, e nunca atualizado depois.
+- **Assinatura de busca usada:** `grep -riP "ainda não fo(i|ram) implementad|not (yet )?implemented|decisão de escopo.*em aberto|scope decision still open|not yet written|no build/lint/test|not present in the repo" -- *.md *.tex`
+- **Instâncias encontradas e status:**
+  - `README.md`/`README.pt-br.md` linha 189 — corrigido (removida a frase obsoleta)
+  - `docs_local/02_governanca/RESUMO_EXECUTIVO_DECISOES.md` §5 antiga — corrigido (substituída por achado real D-51/D-54)
+  - `README.md`/`README.pt-br.md` "34 métodos" — corrigido para 35 (D-51 adicionou uma linha)
+  - `CLAUDE.md` linha 7 ("no build/lint/test", "pipeline not yet written", "no git repository") — corrigido
+  - `CLAUDE.md` linha 20 ("TDS.csv... not present in the repo yet") — corrigido
+  - `CLAUDE.md` linha 28 (lista de pipeline com só `script_00`-`05`, rotulada "not yet implemented") — corrigido, lista completa dos 29 scripts
+  - `CLAUDE.md` linha 72 ("3 placeholder entries" no refs.bib) — corrigido, tem 5 entradas reais
+  - `CLAUDE.md` linha 75 ("100% do artigo é placeholder") — corrigido
+  - `docs_local/01_manuscrito/Artigo/src/*.tex` — busca não encontrou o padrão, nenhuma ação necessária
+- **Por que isso importa mais que um typo comum:** `CLAUDE.md` é injetado como contexto em toda sessão futura — diferente de um README que um leitor humano lê com juízo crítico, esse arquivo é tratado como verdade de partida por qualquer agente. As três afirmações erradas ali (sem pipeline, sem git, sem os 4 CSVs) poderiam levar uma sessão futura a `git init` por engano ou a gastar tempo verificando arquivos que obviamente existem.
+- **Decisão de não criar `docs/PADROES_DE_RISCO.md`:** o projeto já usa este arquivo (`DECISOES.md`) como log único de decisões/achados — introduzir um segundo arquivo só para rastrear este padrão específico duplicaria estrutura num projeto pequeno (mesmo princípio do item "Excesso" da skill `auditoria-projeto`). Esta entrada cumpre o mesmo papel.
+
+### D-56 — Bateria original re-treinada com PDSI como covariável climática, para comparação antes/depois método a método
+- **Data:** 2026-09-07 · **Status:** Implementada e concluída
+- **Contexto:** depois de D-14/D-37 (padrão cíclico ligado a seca, PDSI) e D-39/D-40/D-41 (WRTDS, balanço de massa, cenários), a bateria original de 21 métodos de previsão (`script_01`-`script_15`) permanece, conforme já registrado em D-43/limitação (k) de `conclusao.tex`, treinada sem nenhuma informação de regime climático. O usuário pediu explicitamente o histórico de treinamento **depois** da divisão por clima, para mostrar quanto cada modelo melhorou/piorou/mudou com o novo método — e perguntou se isso faz sentido dado que WRTDS/balanço/cenários usam abordagens totalmente diferentes.
+- **Opção descartada — dividir os dados em subconjuntos por regime climático e treinar um sub-modelo por regime:** rejeitada. A série tem ~180 meses; os regimes identificados (seca 2012-2016, normal 2016-2019, seca 2020-2022, recuo depois) dariam subconjuntos de ~24-50 meses cada, insuficientes para RF/XGBoost/SVR/GP/LSTM (que já têm desempenho fraco na série inteira, D-32) sem overfitting severo. Além disso, o regime climático futuro (necessário para prever +10/+15/+20 anos) é desconhecido — problema que D-41/D-51 já resolvem corretamente via simulação Monte Carlo sobre a distribuição histórica do PDSI, não fatiando o treino.
+- **Decisão:** manter a bateria original intacta (linhas já existentes em `resultados_comparacao.csv` não são alteradas nem removidas) e criar uma **segunda rodada dos mesmos métodos, com o PDSI (defasagem de 4 meses, mesma série e lag de D-37/D-41) adicionado como covariável/regressor exógeno**, mesmo esquema de split treino/holdout dos originais, mesmas métricas (RMSE/MAE/R² no holdout, tendência com p-valor, previsão pontual + IC90 em +10/+15/+20 anos). Cada linha nova entra em `resultados_comparacao.csv`/`.json` com sufixo `_com_pdsi` (ex. `sarima_com_pdsi`, `xgboost_com_pdsi`), permitindo comparação direta linha a linha com o método original correspondente.
+- **Escopo — métodos incluídos nesta rodada** (aceitam covariável exógena por desenho): SARIMA→SARIMAX (`script_02`), Random Forest (`script_03`), XGBoost/LightGBM (`script_04`), Prophet com regressor externo + regressão bayesiana (`script_05`), SVR/GP (`script_09`), Detrend+árvore (`script_10`), híbrido SARIMA+Prophet (`script_12`), GAM (`script_23`), regressão quantílica (`script_24`), espaço de estados/DLM (`script_22`).
+- **Escopo — métodos excluídos desta rodada, e por quê:** os 4 baselines obrigatórios (naive, seasonal-naive, ETS, theta — `script_08`) são propositalmente ingênuos por definição, não fazem sentido com covariável; Mann-Kendall/Sen/Theil-Sen/OLS/STL (`script_01`) são estatística de tendência, não modelos de previsão treináveis com regressor; LSTM (`script_13`) fica de fora nesta rodada por já ter desempenho abaixo dos baselines sem covariável (D-43/limitação (f)) — reavaliar depois se o ganho nos demais métodos for expressivo.
+- **Covariável futura (para os horizontes +10/+15/+20a):** usa a mesma trajetória de PDSI simulada por AR(1) do cenário "normal" de D-41 (μ histórico, mesmos parâmetros φ=0,894/resid_std=1,08), não uma extrapolação nova. **Limitação declarada antecipadamente, mesmo padrão do item (g) de `conclusao.tex`** (incerteza do Cloreto extrapolado em `script_11`): a incerteza de qual cenário climático de fato ocorrerá não é propagada ao IC90 final de cada método nesta rodada — só a incerteza interna de cada modelo, dado o caminho de PDSI do cenário normal. Comparar contra os 4 cenários (D-41) fica como extensão possível, não parte desta rodada inicial.
+- **Formato do relatório de comparação:** tabela nova (script e nome de arquivo a definir na implementação) com uma linha por método incluído nesta rodada, colunas RMSE/MAE/R²/tendência antes vs. depois e a variação percentual — vai para `docs_local/01_manuscrito/Artigo/src/resultados.tex` como subseção nova, não substitui a tabela de síntese existente (`script_15`).
+- **Evidência:** `script_29_bateria_pdsi_covariavel.py` executado com sucesso; `resultados_comparacao.csv`/`.json` (12 linhas novas com sufixo `_com_pdsi`), `comparacao_pdsi_antes_depois.csv` e `docs_local/01_manuscrito/Artigo/images/bateria-pdsi-covariavel-comparacao.png`. Resultado: **não há melhora consistente** — 4 dos 12 métodos melhoraram no RMSE de *holdout* (XGBoost −13,8%, regressão quantílica Q50 −26,6%, Random Forest −2,5%, LightGBM −1,5%) e os outros 8 pioraram (Prophet +18,5%, híbrido SARIMA+Prophet +17,0%, Detrend+RF +11,4%, espaço de estados +7,5%, SARIMA +7,6%, regressão bayesiana +2,2%, SVR +1,4%, GAM −3,4% mas com inversão de sinal da tendência). A tendência estimada muda substancialmente em vários métodos (ex. SARIMA 10,43→6,23 mg/L/ano, GAM 9,45→−2,61 mg/L/ano). Nova subseção "Bateria original re-treinada com PDSI como covariável (D-56)" adicionada a `docs_local/01_manuscrito/Artigo/src/resultados.tex`, com tabela e figura, imediatamente antes de "Reconciliação entre as famílias de método".
+- **Bug corrigido durante a implementação, registrado por ser sutil:** `pdsi_lag_em()` usava `pd.DateOffset(months=lag)`, que preserva o dia-do-mês em vez de normalizar para fim de mês (ex.: 30/abr − 4 meses = 30/dez, não 31/dez, que é a data presente no índice do PDSI histórico/estendido). Em chamadas em lote (SARIMAX, GAM, Prophet, etc.) isso passava despercebido porque `.ffill().bfill()` usa os vizinhos do próprio lote para tapar o buraco; nas funções de previsão recursiva (árvore, SVR), a chamada é feita com uma única data por vez, sem vizinho para preencher — o valor ficava `NaN` de verdade. RandomForestRegressor (scikit-learn 1.9) e XGBoost/LightGBM toleram `NaN` silenciosamente e não travam, então essas três rodaram "com sucesso" na primeira tentativa mas usando PDSI ausente (não o valor determinístico do cenário normal) em ~80 dos 240 passos recursivos — só o SVR, que rejeita `NaN` explicitamente, expôs o problema via exceção. Corrigido normalizando a data defasada para fim de mês (`+ pd.offsets.MonthEnd(0)`) antes do `reindex`; validado com teste direto (0 `NaN` em 240 passos, antes 80) antes de re-executar a bateria completa.
+- **Evidência:** `CLAUDE.md`, `README.md`, `README.pt-br.md`, `docs_local/02_governanca/RESUMO_EXECUTIVO_DECISOES.md` (todos editados nesta entrada).
+
+### D-57 — Fine-tuning da representação do PDSI para os 4 métodos que melhoraram em D-56
+- **Data:** 2026-09-07 · **Status:** Implementada e concluída
+- **Contexto:** em D-56, 4 dos 12 métodos re-treinados com PDSI melhoraram o RMSE de *holdout* frente à versão original sem PDSI (XGBoost −13,8%, regressão quantílica Q50 −26,6%, Random Forest −2,5%, LightGBM −1,5%); os outros 8 pioraram. O usuário perguntou se dá para melhorar ainda mais esses 4 com os dados já disponíveis (sem novos dados). Todos os 4 usavam um único *lag* fixo de PDSI (4 meses, herdado de D-37/D-41) — a hipótese testada aqui é se uma representação mais rica do PDSI (múltiplos lags) melhora o desempenho, mantendo a validação honesta já implementada (`validacao_utils.validar_metodo`) como critério de aceitação, não só o RMSE de *holdout* isolado (risco de overfitting real dado n≈182 meses e apenas 24 de *holdout*).
+- **Decisão:** para os métodos baseados em árvore (Random Forest, XGBoost, LightGBM), adicionar múltiplos lags de PDSI como features simultâneas (candidatos: 1, 2, 4, 6, 8, 12 meses) — árvores toleram bem *features* correlacionadas e podem selecionar a defasagem mais informativa via importância/*splits*. Para a regressão quantílica (linear, sensível a multicolinearidade entre lags altamente correlacionados dado φ=0,894 do AR(1) do PDSI), em vez de multi-lag simultâneo, fazer seleção do melhor lag único por validação cruzada expansiva (`TimeSeriesSplit`, 5 *folds*, só no conjunto de treino, sem espiar o *holdout*) entre os mesmos 6 candidatos, e usar esse lag selecionado no lugar do lag fixo de D-37.
+- **Escopo:** novo script `script_30_pdsi_finetuning_multilag.py`, reaproveitando `pdsi_lag_em`/`carregar_tudo`/`montar_linha_base`/`rodar_quantilica_pdsi` de `script_29` (já corrigidos). Linhas novas em `resultados_comparacao.csv`/`.json` com sufixo `_pdsi_multilag` (árvores) e `_pdsi_lagsel` (quantílica), comparadas contra as `_com_pdsi` (D-56, lag único) já existentes — não contra a versão original sem PDSI, que já foi superada nesta comparação.
+- **Critério de aceitação:** só considerar a nova representação como melhoria real se o RMSE da validação honesta (CV expansiva + *backtest*, não só o *holdout* fixo de 24 meses) também melhorar — um ganho só no *holdout* isolado, sem confirmação na CV, é tratado como ruído de amostra pequena, não como evidência.
+- **Evidência:** `script_30_pdsi_finetuning_multilag.py` executado com sucesso; `resultados_comparacao.csv`/`.json` (4 linhas novas, sufixos `_pdsi_multilag` e `_pdsi_lagsel`), `comparacao_pdsi_finetuning_multilag.csv` e `docs_local/01_manuscrito/Artigo/images/pdsi-finetuning-multilag-comparacao.png`. Resultado, avaliado pelo critério de aceitação (RMSE de *holdout* **e** RMSE da CV expansiva, ambos melhorando): **só o XGBoost melhorou de fato** (RMSE holdout −5,3%, RMSE CV expansiva −2,0%) ao usar múltiplos lags de PDSI (1/2/4/6/8/12 meses) como *features* simultâneas. Random Forest e LightGBM **pioraram nas duas métricas** (RF: holdout +6,9%, CV +8,6%; LightGBM: holdout +6,4%, CV +11,2%) -- mais *features* correlacionadas parecem ter piorado o ajuste dado n=182 meses, não melhorado. Para a regressão quantílica Q50, a seleção do melhor lag por CV expansiva (só no treino, sem espiar o *holdout*) **confirmou o lag de 4 meses já usado em D-56/D-37 como o melhor entre os 6 candidatos** (RMSE médio de CV por lag: 1m=112,9, 2m=109,5, **4m=98,3**, 6m=115,8, 8m=112,3, 12m=105,4) -- resultado sem variação (0,0%), não um erro, e uma confirmação metodológica útil: o lag escolhido em D-37 via correlação cruzada bruta já era o ótimo também para desempenho preditivo, não apenas para correlação.
+- **Conclusão prática:** dos 4 métodos que melhoraram em D-56, só o XGBoost tinha margem real de ganho adicional com os dados já disponíveis, e o ganho é modesto (~2-5%). Para Random Forest, LightGBM e regressão quantílica, o lag único de 4 meses (ou a ausência de PDSI, para RF/LightGBM, já que o ganho de D-56 ali era pequeno) já capturava o essencial do sinal disponível -- mais engenharia de *features* de PDSI não é um caminho promissor para esses três com os dados atuais. Nova subseção "Fine-tuning da covariável PDSI (D-57)" adicionada a `docs_local/01_manuscrito/Artigo/src/resultados.tex`, logo após a subseção de D-56.
+
+### D-58 — Dashboard público (Hugging Face Space) com resultados já computados, não os pesos dos modelos
+- **Data:** 2026-09-08 · **Status:** App construído e testado localmente; publicação no Hugging Face pendente de ação do usuário (requer login/token próprio, fora do que a IA pode fazer sozinha)
+- **Contexto:** o usuário perguntou sobre publicar "o modelo de melhor resultado" no Hugging Face para outros pesquisadores do mesmo tema reutilizarem e comparar com os próprios projetos. Verificação prévia: os dois CSVs de outras ETEs já baixados no projeto (San Jose Creek, Point Loma, de D-20/D-21) **não** seguem o mesmo formato eSMR dos nossos 4 CSVs -- são de um sistema diferente da California Water Boards (DMR/NPDES via CIWQS, separado por vírgula, schema de limites de permissão), não o export eSMR (separado por `;`, schema de resultado bruto de monitoramento). Isso não foi confirmado para outras ETEs em geral, só para essas duas.
+- **Opção descartada — publicar os pesos dos 3 modelos finalistas (regressão bayesiana, Detrend+RF, híbrido SARIMA+Prophet) no HF Hub como modelo reutilizável:** rejeitada. São ajustes de série temporal univariada a uma série específica de 182 meses de uma única ETE -- não generalizam para os dados de outro pesquisador, então o valor de reuso de "baixar o modelo e rodar nos seus dados" é essencialmente nulo.
+- **Decisão:** construir um **HF Space** (dashboard Streamlit) que consome apenas os resultados já computados pelo pipeline (`resultados_comparacao.csv`, as comparações de D-56/D-57, e 3 figuras já geradas para o artigo) -- sem re-executar o pipeline pesado (PyMC, Prophet, XGBoost, LightGBM, pygam) no servidor do Space. `requirements.txt` do Space fica leve (`streamlit`, `pandas`, `altair`), cold start rápido. Estrutura em `huggingface_space/` na raiz do repo: `streamlit_app.py`, `data/` (4 CSVs, cópias estáticas), `images/` (3 PNGs), `README.md` (card do Space com metadados YAML) e `requirements.txt`.
+- **Achado real durante a implementação — `balanco_massa` tem RMSE não comparável aos demais métodos:** ao montar o gráfico de comparação de RMSE, `balanco_massa` aparecia como o "melhor" método (RMSE=19,1 mg/L, muito abaixo dos ~39-70 mg/L dos demais). Conferido contra `script_20_balanco_massa.py:273`: esse número é o RMSE da validação de circularidade do Cloreto (um teste de consistência interna do método, calculado sobre a série inteira, não um *holdout*), não um RMSE de previsão de TDS *out-of-sample* como todos os outros 50 métodos da tabela. WRTDS e os 5 cenários climáticos (`script_19`/`21`/`27`) já reportam `NaN` corretamente nessa coluna por não serem comparáveis -- só o balanço de massa "vazava" um número que parece ótimo mas mede outra coisa. **Corrigido na fonte (2026-09-08):** `script_20_balanco_massa.py` alterado para gravar `rmse_holdout`/`mae_holdout`/`r2_holdout` como `NaN` (mesmo padrão de `script_19`/`script_21`), preservando o número real da validação do Cloreto em campos próprios (`validacao_chloride_rmse`/`_mae`/`_r2`) que não colidem com a semântica de "holdout de previsão". Script re-executado; `resultados_comparacao.csv`/`.json` e a cópia em `huggingface_space/data/` regravados. O filtro do Space (checkbox desmarcado por padrão) permanece como camada extra de proteção, agora redundante com a correção na fonte, não mais a única linha de defesa.
+- **Outro achado durante a implementação:** `st.bar_chart` (nativo) ordena o eixo categórico alfabeticamente por padrão, ignorando a ordem das linhas do DataFrame -- corrigido usando Altair direto com `sort` explícito pela coluna de RMSE.
+- **Evidência:** `huggingface_space/` (código completo, testado localmente via `streamlit run`, navegado com o Chrome MCP nas 4 abas do app -- série+finalistas, comparação de métodos, PDSI, sobre). Publicação real no Hugging Face (`huggingface-cli login` + push do Space) fica para o usuário executar, por exigir credencial própria.
+
+### D-59 — Material de apoio interno retirado do rastreamento do git
+- **Data:** 2026-09-09/10 · **Status:** Decidida
+- **Contexto:** o repositório público misturava entregáveis (scripts, dados, READMEs) com material de apoio que ajudou no processo mas não é resultado do projeto -- solicitações de dados, prompts de planejamento, PDFs de literatura de apoio, os 21 relatórios da LADWP, documentos de decisão/governança, e o próprio `docs_local/01_manuscrito/Artigo/` (que será reconstruído do zero).
+- **Decisão:** `git rm --cached` em 101 arquivos (mantidos em disco) + `.gitignore` atualizado para não rastrear essas categorias no futuro. `docs_local/01_manuscrito/Artigo/` inteiro (tex/pdf/imagens/`DECISOES.md`) sai até a reconstrução; documentos de decisão/governança (`docs_local/02_governanca/plano_projeto_TDS.md`, `docs_local/02_governanca/RESUMO_EXECUTIVO_DECISOES.md`, `docs_local/02_governanca/ESCOPO_E_LIMITACOES.md`, `docs_local/02_governanca/GLOSSARIO.md`, `docs_local/02_governanca/GOVERNANCA_DOCUMENTACAO_TEMPLATE.md`) tratados como apoio interno, não resultado público.
+- **Alternativas descartadas:** manter `docs_local/01_manuscrito/Artigo/` rastreado só tirando o PDF compilado -- descartada pelo usuário, que optou por tirar tudo até a reconstrução; manter os docs de decisão como "resultado" (mostrando o rigor metodológico) -- descartada, também tratados como apoio interno.
+- **Ressalva registrada:** os arquivos continuavam no histórico de commits anteriores a `a6b3d4b`/`9867419` -- removidos de fato do histórico via `git filter-repo` em 2026-09-17 (ver D-60, concluído).
+- **Evidência:** commits `a6b3d4b`, `9867419`; `.gitignore`.
+
+### D-60 — Incidente: `python git_filter_repo.py --version` reescreveu o histórico local sem filtro
+- **Data:** 2026-09-14 · **Status:** Resolvido -- recuperação local concluída em 2026-09-17, e a limpeza real do histórico via `filter-repo` também foi concluída na mesma data, seguindo as três lições abaixo: testada primeiro num clone descartável (`C:\Temp\projeto-aplicado-filter-test`, `--paths-from-file`/`--invert-paths` explícitos a partir de uma lista gerada por script, não digitada à mão), verificada (`.git` de 175M para 11M no clone; `git log --all --full-history` vazio para cada caminho removido; `git fsck --full` limpo), só então aplicada ao repositório real (`.git` de 217M para 36M) e enviada com `git push --force-with-lease` (confirmado via `git ls-remote` que `origin/main` aponta para o novo HEAD, `c3a1da6`).
+- **Contexto:** `git-filter-repo` não tinha entry point instalado no PATH (`pip install` não gerou o executável `git-filter-repo` neste ambiente Windows/git-bash) -- a tentativa de checagem via invocação direta do script Python (`python .../git_filter_repo.py --version`) não foi reconhecida como flag de versão pelo parser do script.
+- **Achado:** sem argumentos de caminho reconhecidos, `git-filter-repo` executa por padrão uma reescrita "genérica" do histórico inteiro (novos hashes em todo commit) e remove o remote `origin` como proteção contra push acidental de história reescrita -- mesmo sem nenhum `--path`/`--invert-paths` ter sido passado.
+- **Impacto real:** nenhum -- nada foi enviado ao GitHub antes ou depois do incidente; `git diff` entre o HEAD local reescrito e `origin/main` voltou vazio (conteúdo idêntico, só hashes diferentes).
+- **Recuperação (2026-09-17):** `git remote add origin ...` + `git fetch` + `git reset --hard origin/main` + `git branch --set-upstream-to=origin/main main` -- histórico local restaurado exatamente como estava, zero perda.
+- **Lição para a próxima tentativa real de D-59 (remover do histórico via filter-repo):** (1) nunca invocar `git_filter_repo.py` diretamente dentro do repositório de trabalho real, nem para uma checagem aparentemente inofensiva como `--version` -- usar sempre um clone descartável, como já planejado antes deste incidente; (2) confirmar a instalação via `pip show git-filter-repo` em vez de rodar o script; (3) qualquer invocação real do filtro deve vir com `--path`/`--invert-paths` explícitos, nunca "sem argumentos" para testar.
+- **Evidência:** esta sessão; `git reflog` vazio após o incidente; `git ls-remote` confirmando `origin/main` intacto antes da recuperação.
+
+### D-61 — Overflow sistemático de texto/tabelas no artigo LaTeX, corrigido
+- **Data:** 2026-09-17 · **Status:** Decidida
+- **Contexto:** o usuário reportou (com screenshot da página 5) bullets, texto corrido e várias tabelas estourando a margem/coluna do PDF compilado. Causa raiz identificada: o corpo do artigo usa `\begin{multicols*}{2}` (pacote `multicol`), não a classe `article` em modo `twocolumn` nativo -- resultando em colunas de só ~8,8cm de largura útil. Nomes de arquivo/script/módulo longos (`script_XX_nome.py`, `statsmodels.stats.diagnostic.breaks_cusumolsresid`) estavam em `\texttt{}` puro, sem nenhum pacote de quebra habilitado. As 12 tabelas usavam `tabular` de largura fixa confinado a uma única coluna, sem `table*` (que `multicol` não oferece).
+- **Decisão:** (1) `\usepackage{url}` no preâmbulo + conversão de ~40 ocorrências de `\texttt{}` para `\url{}` nos identificadores longos (`docs_local/01_manuscrito/Artigo/src/metodologia.tex`, `docs_local/01_manuscrito/Artigo/src/resultados.tex`) -- `\url{}` quebra automaticamente em `.`/`_`/`/`, sem precisar escapar o underscore. (2) Todas as 12 tabelas convertidas para ocupar a largura total da página (`\end{multicols*}` ... tabela ... `\begin{multicols*}{2}`), não só reduzidas de fonte -- testado primeiro `\footnotesize`+`\setlength{\tabcolsep}{3pt}` mantendo-as numa coluna só, mas mesmo assim 4 delas (Tabelas 1, 2, 3, 8) continuaram overflowing porque o texto do cabeçalho ("Tendência (mg/L/ano)", "R² (holdout)") sozinho já excede 8,8cm -- a correção de fonte foi abandonada em favor da largura total, uniformemente, para as 12.
+- **Alternativas descartadas:** abreviar nomes de método/reduzir conteúdo das células para caber numa coluna -- descartada pelo usuário (escolha explícita via pergunta direta), preferiu manter os dados como estão; rotacionar tabelas 90° (paisagem) -- descartada por ser menos confortável de ler que largura total, e nenhuma tabela precisou disso na prática.
+- **Verificação:** ciclo completo de compilação (`pdflatex → bibtex → pdflatex → pdflatex`) limpo, 0 erros, 0 `Overfull \hbox` em todo o log -- confirmado por `grep` no `template.log`, não só por inspeção visual. Todas as 12 tabelas e as duas páginas de bullets/texto corrido originalmente reportadas foram renderizadas (`pdftoppm`) e inspecionadas visualmente uma a uma antes de considerar concluído.
+- **Efeito colateral esperado, não um problema:** a contagem de páginas subiu de 32 para 40 (tabelas de largura total ocupam mais espaço vertical que confinadas numa coluna) -- `CLAUDE.md` atualizado.
+- **Evidência:** `docs_local/01_manuscrito/Artigo/template.tex`, `docs_local/01_manuscrito/Artigo/src/metodologia.tex`, `docs_local/01_manuscrito/Artigo/src/resultados.tex`, `docs_local/01_manuscrito/Artigo/template.pdf` (40 páginas, recompilado).
+
+### D-62 — Documentos locais reunidos em `docs_local/`, por uso na pesquisa
+- **Data:** 2026-10-04 · **Status:** Decidida
+- **Contexto:** o material fora do git (manuscrito, governança, prompts, literatura, relatórios de qualidade e aula) estava espalhado na raiz e em pastas soltas. O `.gitignore` listava cada caminho.
+- **Decisão:** reunir esses documentos em `docs_local/`, com as pastas `01_manuscrito`, `02_governanca`, `03_prompts`, `04_literatura`, `05_relatorios_qualidade` e `06_aula_e_apoio`. O artigo (`Artigo/` e `Artigo_Resumido/`) permanece inteiro, inclusive figuras e arquivos de compilação. O `.gitignore` passa a ignorar `docs_local/`. Citações em Markdown, LaTeX, notebook e comentários de script apontam para os caminhos novos. Caches (`.venv`, `__pycache__`, `mlruns/`, `mlflow.db`, logs e `.claude/`) ficam onde estavam.
+- **Alternativas descartadas:** organizar só por papel, preservando os nomes antigos (`artigo/`, `notas/`, `prompts/`, `literatura/`, `relatorios/`) — descartada porque não separa governança, aula e literatura. Dois blocos (`projeto/` e `fontes/`) — descartada porque mistura manuscrito, decisões e prompts no mesmo lugar.
+- **Evidência:** `docs_local/`; `.gitignore`; `CLAUDE.md`.
+
+### D-63 — Um único registro de decisões; o manuscrito resumido só aponta para ele
+- **Data:** 2026-10-04 · **Status:** Decidida
+- **Contexto:** `Artigo/DECISOES.md` e `Artigo_Resumido/DECISOES.md` eram duas cópias do mesmo registro. Um aviso no topo não impedia edição no arquivo errado, e nada copiava uma alteração de um para o outro.
+- **Decisão:** o registro canônico fica em `docs_local/01_manuscrito/Artigo/DECISOES.md`. `docs_local/01_manuscrito/Artigo_Resumido/DECISOES.md` passou a ser um apontador de poucas linhas. As duas citações da nota D-38 em `Artigo_Resumido/COMO_COMPILAR.md` usam `../Artigo/DECISOES.md`.
+- **Alternativas descartadas:** script que copia o canônico sobre o resumido — descartada porque manteria dois corpos e a próxima edição ainda poderia cair no arquivo errado. Atalho do Windows no lugar do arquivo — descartado porque depende de permissão e quebra com facilidade. Mover o registro para `docs_local/02_governanca/` — descartada nesta sessão porque espalharia troca de caminho pelo LaTeX e pelos prompts.
+
+### D-64 — Cobertura de IC90 da regressão bayesiana (achado da skill `revisao-academica`) + correção da contagem de métodos na Conclusão
+- **Data:** 2026-10-12 · **Status:** Decidida
+- **Contexto:** rodando a skill `revisao-academica` sobre `Artigo`/`Artigo_Resumido`, dois achados reais sobreviveram à verificação. (1) O texto afirmava "nenhum dos três finalistas tem incerteza bem calibrada" (`resultados.tex`), mas `results/testes_robustez_resultados.csv` (item `1_cobertura_ic`, `script_31`, issue #1 do repositório) nunca testou a cobertura empírica de IC90 da **regressão bayesiana** — um dos 3 finalistas de `script_15`. O motivo histórico é a decisão de escopo de `script_14` (regressão bayesiana reusa o resíduo do OLS nos itens 2/3/4 do `script_31` — Diebold-Mariano, diagnóstico de resíduo, gap *overfitting*), estendida por engano ao item 1 também, apesar de a largura do IC90 bayesiano usar a posterior completa (slope + sigma), diferente do IC só-da-inclinação do OLS. (2) `conclusao.tex` limitação (k) listava "8 métodos adicionais" desenhados para o padrão cíclico, omitindo SVR — contradizendo `introducao.tex` ("nove métodos... SVR") e D-50 ("a seção 3.f do plano original está agora 100% implementada (9 de 9 itens ..., SVR — já existente desde `script_09` —, ...)").
+- **Decisão:** (1) adicionada `_fit_predict_ic_bayes()` a `script_31_testes_robustez_avancados.py`, reusando a mesma construção da previsão final de `script_05.rodar_bayesiano` (posterior completa via NUTS, ponto = média dos draws preditivos, IC90 = percentis 5/95) por fold/origem de CV expansiva e *backtest* de origem móvel — não uma aproximação analítica (decisão explícita do usuário: NUTS completo, aceitando o custo de tempo, ~1h de execução para os ~25 ajustes). Resultado: cobertura via CV expansiva = 86,7% (a mais próxima do nominal de 90% em toda a bateria), caindo para 66,7%/45,5% no *backtest* 36m/60m. `resultados.tex`/`Artigo_Resumido/resultados.tex` e a aba 7 do dashboard Streamlit (`huggingface_space/streamlit_app.py`) foram atualizados para refletir que a regressão bayesiana é, na verdade, a mais calibrada dos três finalistas (não "nenhum dos três"). (2) `conclusao.tex` limitação (k) corrigida para "9 métodos" com SVR incluído na lista, igual a `introducao.tex`/D-50; `Artigo_Resumido/conclusao.tex` não precisou de ajuste (a limitação (k) foi condensada fora da versão resumida).
+- **Alternativas descartadas:** aproximação analítica (regressão linear bayesiana conjugada, fechamento rápido sem MCMC) para a cobertura de IC90 — descartada pelo usuário em favor do rigor do NUTS completo, mesmo método da previsão final reportada no artigo.
+- **Evidência:** `scripts/script_31_testes_robustez_avancados.py` (`_fit_predict_ic_bayes`); `results/testes_robustez_resultados.csv`/`.json` e `results/figures/testes-robustez-avancados.png` regenerados (5 linhas novas `variante == "regressao_bayesiana"` no item `1_cobertura_ic`); cópias sincronizadas em `huggingface_space/data/` e `huggingface_space/images/`; `docs_local/01_manuscrito/Artigo/src/resultados.tex` e `conclusao.tex`, `docs_local/01_manuscrito/Artigo_Resumido/src/resultados.tex`; PDFs de ambas as versões recompilados (4 passes `pdflatex`+`bibtex`, sem citação/referência pendurada).
+- **Evidência:** `docs_local/01_manuscrito/Artigo/DECISOES.md`; `docs_local/01_manuscrito/Artigo_Resumido/DECISOES.md`; `docs_local/01_manuscrito/Artigo_Resumido/COMO_COMPILAR.md`.
+
+### D-65 — 4 achados de uma segunda rodada de `revisao-academica` (escopo: projeto inteiro), corrigidos
+- **Data:** 2026-10-12 · **Status:** Decidida
+- **Contexto:** rodada de `revisao-academica` com escopo "projeto inteiro" (manuscrito completo + dashboard Streamlit), posterior a D-64. Confirmou que D-64 propagou corretamente em todo o escopo (nenhuma ocorrência residual de "nenhum dos três"/"8 métodos adicionais") e encontrou 4 achados novos, todos aplicados nesta mesma execução.
+- **Achado 1 (Alta, citações):** `Artigo/src/trabalhos-relacionados.tex:11` afirmava que a SCSC "é o único dos quatro trabalhos citados nesta seção cujo texto completo foi efetivamente lido" -- contradizendo `:7` do mesmo arquivo, que já afirma o mesmo sobre Porse et al., quatro frases antes. `Artigo_Resumido` já não tinha o problema.
+- **Achado 2 (Média, consistência numérica):** a faixa de cenário climático "594 a 721 mg/L em +20 anos" (citada em prosa no abstract/conclusão de ambas as versões, e também na Seção "Reconciliação entre as famílias de método" do `Artigo/resultados.tex`, e em D-42 deste arquivo) usava 721, que é o P50 do cenário seco em **+10 anos** (`cenarios_resultados.csv`), não em +20 anos -- o valor correto de +20 anos é 718 (seco, P50=717,80). A tabela em `resultados.tex:438` já usava os três horizontes corretos; só a prosa resumida citava o número do horizonte errado. Corrigido em 6 ocorrências: `Artigo/abstract.tex`, `Artigo/conclusao.tex`, `Artigo/resultados.tex` (Seção "Reconciliação"), `Artigo_Resumido/abstract.tex`, `Artigo_Resumido/conclusao.tex`, e `DECISOES.md` (D-42, duas ocorrências na mesma entrada).
+- **Achado 3 (Média, figura ausente):** a bateria de robustez (`script_31_testes_robustez_avancados.py`) nunca teve sua figura (`testes-robustez-avancados.png`, gap RMSE in-sample x CV x holdout para os 3 finalistas + SARIMA runner-up) incluída no PDF do `Artigo` -- só existia no dashboard. Adicionada em `Artigo/src/resultados.tex`, na Seção "Síntese final", logo após o parágrafo que discute o teste de Diebold-Mariano do Detrend+RF (o conteúdo da figura é diretamente sobre esse gap de erro, não sobre a cobertura de IC90 do parágrafo seguinte -- script_31 só gera essa única figura estática, de item 4/gap de overfitting; a cobertura de IC90 do item 1 é discutida só em prosa no artigo e construída dinamicamente no dashboard, sem PNG estático equivalente). Não adicionada ao `Artigo_Resumido` (que já é seletivo, 1 figura por achado principal).
+- **Achado 4 (Baixa, colisão de nomenclatura):** o artigo nomeava o terceiro dataset de tratamento de ND do BOD como "Dataset F" (`metodologia.tex`, `resultados.tex`, 3 ocorrências), colidindo com a letra F do esquema de 5 letras de D-16 neste arquivo (onde F = Kaplan-Meier, não ROS/Helsel). Renomeado para "Dataset C" nas 3 ocorrências do `Artigo` (o `Artigo_Resumido` não usa letras para os datasets, não precisou de ajuste). `DECISOES.md`/D-16 mantido como está (é o canônico).
+- **Alternativas descartadas:** nenhuma -- os 4 achados tinham texto de correção objetivo, sem ambiguidade de abordagem.
+- **Evidência:** `docs_local/01_manuscrito/Artigo/src/trabalhos-relacionados.tex`, `abstract.tex`, `conclusao.tex`, `resultados.tex`, `metodologia.tex`; `docs_local/01_manuscrito/Artigo_Resumido/src/abstract.tex`, `conclusao.tex`; `docs_local/01_manuscrito/Artigo/DECISOES.md` (D-42); `docs_local/01_manuscrito/Artigo/images/testes-robustez-avancados.png` (copiada de `results/figures/`); `results/cenarios_resultados.csv` (confirmação do valor correto, seco/horizonte=20/p50=717,80); PDFs de ambas as versões recompilados (4 passes `pdflatex`+`bibtex`, sem citação/referência pendurada -- um erro de compilação novo, `\url` dentro de `\caption`, foi introduzido e corrigido na mesma execução ao trocar para `\texttt`).

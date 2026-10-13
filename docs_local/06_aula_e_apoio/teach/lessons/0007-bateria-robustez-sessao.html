@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0007 — A bateria de validação/robustez desta sessão</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.4rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0 1.4rem; font-size: 0.92rem;
+  }
+  .howto .step { margin: 0.35rem 0; }
+  .howto .step b { color: var(--accent); }
+  table.ic { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+  table.ic th, table.ic td { border-bottom: 1px solid var(--rule); padding: 0.32rem 0.5rem; text-align: left; }
+  table.ic td.bad { color: var(--accent); font-weight: 600; }
+  table.ic td.ok { color: var(--fact); font-weight: 600; }
+  svg.chart { width: 100%; height: auto; font-family: inherit; }
+  svg.chart .bar { }
+  svg.chart .axis { stroke: var(--ink-soft); stroke-width: 1; }
+  svg.chart text { fill: var(--ink-soft); font-size: 11px; }
+  svg.chart .nominal { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 3; }
+  .not-in-article {
+    font-family: "Helvetica Neue", Arial, sans-serif; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 0.15em 0.6em; display: inline-block; margin-bottom: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0007 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>A auditoria de robustez: o que sobrevive quando você aperta o projeto</h1>
+<p class="lead">Objetivo desta lição: entender os dois achados mais técnicos (e mais prováveis de virar pergunta difícil de banca) da bateria de validação — o gap de overfitting e a calibração real dos intervalos de confiança. O achado 2 (IC90) já está incorporado como texto corrido em <code>resultados.tex</code> (2026-10-12); o achado 1 (gap in-sample×CV×holdout) continua só no README público e nesta lição, sem parágrafo correspondente no artigo. Nenhum dos dois tem <em>figura</em> no artigo — os gráficos abaixo foram construídos para esta lição a partir dos dados reais de <code>script_31</code>.</p>
+<p class="source">Pré-requisito: <a href="0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">Lição 0006 — Métodos adicionais e os 3 finalistas</a>. Fonte: issues #1/#9-#15 do repo GitHub, <code>results/testes_robustez_resultados.csv</code> · termos técnicos: <a href="../reference/glossario-estatistico.html" target="_blank" rel="noopener noreferrer">Glossário estatístico</a>.</p>
+
+<h2>1. O gap in-sample × CV × holdout — quem está "decorando" a série</h2>
+<span class="not-in-article">Esta figura existe — gerada pelo próprio script_31, mas ainda não publicada no manuscrito</span>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../../results/figures/testes-robustez-avancados.png" alt="RMSE in-sample, CV e holdout para os 3 finalistas + runner-up">
+      <figcaption>Figura gerada por <code>script_31_testes_robustez_avancados.py</code> (função <code>gerar_figura_item4</code>): "Gap in-sample x CV x holdout — finalistas + runner-up".</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico:</strong>
+      <div class="step"><b>1.</b> Para cada método (regressão bayesiana, Detrend+RF, híbrido, SARIMA como runner-up), há 3 barras: RMSE ajustado na série completa ("in-sample" — o modelo já viu esses dados), RMSE médio de 5 folds de validação cruzada expansiva ("CV" — janelas que o modelo não viu no momento do ajuste daquele fold), e RMSE do holdout final de 24 meses (dados nunca vistos).</div>
+      <div class="step"><b>2.</b> <span class="fact">O que procurar: uma barra "in-sample" muito mais baixa que as outras duas é sinal de alerta de overfitting — o modelo está ajustando ruído da própria série de treino, não aprendendo um padrão que generaliza.</span></div>
+      <div class="step"><b>3.</b> O caso mais chamativo é o Detrend+RF: RMSE in-sample de 19,4 mg/L — o melhor de todos, por uma margem grande — mas RMSE de CV de 76,7 (o pior dos 4!) e RMSE de holdout de 49,8 (no meio do grupo). <span class="interp">A árvore de regressão consegue se ajustar muito bem ao próprio resíduo que já viu, mas isso não se traduz automaticamente em generalização — é exatamente o padrão clássico de overfitting em modelos de árvore com poucos dados.</span></div>
+      <div class="step"><b>4.</b> Os outros três (bayesiana, híbrido, SARIMA) têm gaps in-sample→CV mais moderados (76,9→84,8; 58,4→88,6; 78,0→90,8) — ainda sobem, mas não de forma tão acentuada quanto o Detrend+RF.</div>
+      <div class="step"><b>5.</b> Pergunta de banca: "se o Detrend+RF tem o pior RMSE de CV, por que ele continua finalista?" Resposta: o RMSE de holdout (o critério que realmente importa, porque é o único verdadeiramente fora da amostra em um único corte temporal real) continua competitivo (49,8, bem próximo dos outros 3) — o gap grande é entre in-sample e CV, um sinal de que o número "in-sample" nunca deveria ter sido usado como evidência de qualidade por si só, não que o modelo seja inútil.</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a evidência quantitativa que qualifica (sem reverter) a escolha do Detrend+RF como finalista: o <a href="../reference/glossario-estatistico.html#rmse" target="_blank" rel="noopener noreferrer">RMSE</a> in-sample baixo (19,4 — a tabela acima) que parecia uma vantagem forte na Lição 0006 é, na verdade, parcialmente overfitting — medido no CV (76,7) e no holdout (49,8), o critério real que sustenta a escolha é o holdout, não o in-sample.</p>
+    <p class="afeta">Afeta: a justificativa de <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> para <code>detrend_rf</code> (junto com a correção de resíduo da Lição 0006) — ainda não tem parágrafo próprio em <code>resultados.tex</code>/<code>conclusao.tex</code> (só no README público e nesta lição).</p>
+  </aside>
+</div>
+
+<table class="ic">
+<tr><th>Método</th><th>RMSE in-sample</th><th>RMSE CV (5 folds)</th><th>RMSE holdout</th></tr>
+<tr><td>Regressão bayesiana</td><td>76,9</td><td>84,8</td><td>49,3</td></tr>
+<tr><td><strong>Detrend + RF</strong></td><td class="ok">19,4</td><td class="bad">76,7</td><td>49,8</td></tr>
+<tr><td>Híbrido SARIMA+Prophet</td><td>58,4</td><td>88,6</td><td>46,4</td></tr>
+<tr><td>SARIMA</td><td>78,0</td><td>90,8</td><td>48,4</td></tr>
+</table>
+<p class="source">Fonte: <code>results/testes_robustez_resultados.csv</code>, item <code>4_gap_overfitting</code>.</p>
+
+<div class="quiz" data-quiz>
+  <div class="q">O que o RMSE in-sample muito baixo do Detrend+RF (19,4) comparado ao CV (76,7) indica?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Que o método é o mais confiável de todos para uso futuro.</button>
+    <button class="opt" data-correct="true">Um sinal clássico de overfitting ao ajustar a própria série vista.</button>
+    <button class="opt" data-correct="false">Que a validação cruzada expansiva foi configurada incorretamente.</button>
+    <button class="opt" data-correct="false">Que o RMSE holdout dos outros métodos está inflado por erro.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>2. A calibração real dos IC90% — o achado mais incômodo</h2>
+<span class="not-in-article">Os números já estão no artigo (resultados.tex, seção "Síntese final"); este gráfico específico foi construído só para esta lição</span>
+<p>Toda vez que o artigo reporta um "IC90%" (intervalo de confiança de 90%), a expectativa é que, se você repetisse o experimento muitas vezes, o valor real cairia dentro desse intervalo em <strong>90% das vezes</strong>. Esta bateria testou isso de verdade, em vez de assumir — rodando validação cruzada expansiva e <em>backtesting</em> de origem móvel e contando quantas vezes o valor real caiu dentro do IC90% projetado.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <svg class="chart" viewBox="0 0 640 260" preserveAspectRatio="xMidYMid meet">
+      <line class="nominal" x1="60" y1="35" x2="600" y2="35"></line>
+      <text x="605" y="39" font-size="11" fill="var(--accent)">90% nominal</text>
+      <line class="axis" x1="60" y1="20" x2="60" y2="230"></line>
+      <line class="axis" x1="60" y1="230" x2="600" y2="230"></line>
+      <text x="25" y="234">0%</text>
+      <text x="15" y="39">100%</text>
+      <!-- scale: 0-100% mapped to y=230..20, so 1% = 2.1px -->
+      <!-- MK/Theil-Sen/OLS ~37% -->
+      <g>
+        <rect class="bar" x="70" y="151.7" width="55" height="78.3" fill="var(--accent)"></rect>
+        <text x="58" y="245" font-size="10">MK/TS/OLS</text>
+        <text x="80" y="142" font-size="11">37%</text>
+      </g>
+      <!-- SARIMA/hibrido 75% -->
+      <g>
+        <rect class="bar" x="160" y="72.5" width="55" height="157.5" fill="var(--fact)"></rect>
+        <text x="150" y="245" font-size="10">SARIMA/híbr.</text>
+        <text x="170" y="63" font-size="11">75%</text>
+      </g>
+      <!-- detrend_rf 27% -->
+      <g>
+        <rect class="bar" x="250" y="167" width="55" height="63" fill="var(--accent)"></rect>
+        <text x="238" y="245" font-size="10">Detrend+RF</text>
+        <text x="260" y="157" font-size="11">27%</text>
+      </g>
+      <!-- regressao_bayesiana 87% -- achado atualizado em 2026-10-12 (<a class="dcode" href="../reference/decisoes-citadas.html#D-64" target="_blank" rel="noopener noreferrer">D-64</a>), antes nunca testado -->
+      <g>
+        <rect class="bar" x="340" y="47.3" width="60" height="182.7" fill="var(--fact)"></rect>
+        <text x="322" y="245" font-size="10">Reg. bayesiana</text>
+        <text x="352" y="38" font-size="11">87%</text>
+      </g>
+      <text x="330" y="14" text-anchor="middle" font-size="12" font-weight="600">Cobertura empírica do IC90% na CV expansiva (5 folds)</text>
+    </svg>
+    <p class="source">Fonte: <code>results/testes_robustez_resultados.csv</code>, item <code>1_cobertura_ic</code>, métrica <code>cv_ic90_cobertura_pct</code>.</p>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Da bateria toda, só a regressão bayesiana tem <a href="../reference/glossario-estatistico.html#ic90" target="_blank" rel="noopener noreferrer">cobertura</a> próxima do nominal (87% via CV — ou seja, em 87% dos folds de validação, o valor real caiu dentro da faixa de 90% projetada, quase o esperado) — os demais, incluindo os outros 2 finalistas, não são estatisticamente calibrados: a tabela abaixo mostra o IC90 "largo demais" (SARIMA/híbrido, cobre mas é pouco informativo) ou "estreito demais" (Detrend+RF, MK/Theil-Sen/OLS, cobre pouco). Isso não invalida as previsões pontuais, mas exige qualificar qualquer afirmação sobre "intervalo de confiança" na defesa.</p>
+    <p class="afeta">Afeta: o parágrafo de IC90 em <code>resultados.tex</code> (seção "Síntese final") — atualizado em 2026-10-12 (<a class="dcode" href="../reference/decisoes-citadas.html#D-64" target="_blank" rel="noopener noreferrer">D-64</a>) depois que a cobertura da regressão bayesiana foi testada por NUTS completo pela primeira vez.</p>
+  </aside>
+</div>
+
+<table class="ic">
+<tr><th>Método</th><th>Cobertura CV (5 folds)</th><th>Cobertura backtest 36m</th><th>Cobertura backtest 60m</th><th>Largura mediana (CV)</th></tr>
+<tr><td>Mann-Kendall/Sen</td><td class="bad">38,3%</td><td class="bad">26,7%</td><td class="bad">27,3%</td><td>87,1 mg/L</td></tr>
+<tr><td>Theil-Sen</td><td class="bad">38,3%</td><td class="bad">26,7%</td><td class="bad">27,3%</td><td>87,3 mg/L</td></tr>
+<tr><td>OLS</td><td class="bad">36,7%</td><td class="bad">26,7%</td><td class="bad">27,3%</td><td>80,2 mg/L</td></tr>
+<tr><td>SARIMA</td><td class="ok">75,0%</td><td class="ok">80,0%</td><td class="ok">90,9%</td><td>251,9 mg/L</td></tr>
+<tr><td>Híbrido SARIMA+Prophet</td><td class="ok">75,0%</td><td class="ok">80,0%</td><td class="ok">90,9%</td><td>251,9 mg/L</td></tr>
+<tr><td>Detrend + RF (bootstrap)</td><td class="bad">26,7%</td><td class="bad">13,3%</td><td>45,5%</td><td>66,1 mg/L</td></tr>
+<tr><td><strong>Regressão bayesiana</strong> (NUTS)</td><td class="ok">86,7%</td><td class="bad">66,7%</td><td class="bad">45,5%</td><td>267,1 mg/L</td></tr>
+</table>
+<p class="source">Fonte: idem, métricas <code>cv_ic90_cobertura_pct</code>, <code>backtest_ic90_cobertura_pct_36m/60m</code>, <code>cv_ic90_largura_mediana</code>. Nominal esperado: 90%.</p>
+
+<div class="howto">
+  <strong>Como ler esta tabela — a leitura correta e honesta para a banca:</strong>
+  <div class="step"><b>1.</b> Mann-Kendall/Sen, Theil-Sen e OLS têm cobertura de ~27-38% — bem abaixo dos 90% esperados. <span class="fact">O IC desses três métodos é sistematicamente estreito demais: ele não captura nem 40% das vezes em que deveria capturar o valor real.</span> Isso é esperado, na verdade: o IC desses métodos vem só da incerteza do parâmetro da reta, não incorpora a variabilidade residual real da série (ponto já registrado como limitação na Metodologia antes desta sessão).</div>
+  <div class="step"><b>2.</b> SARIMA e híbrido ficam perto do nominal no CV (75%) — mas à custa de um IC muito mais largo (mediana de 251,9 mg/L contra 66-87 mg/L dos métodos clássicos). <span class="interp">Cobertura melhor não é de graça: vem com uma banda de incerteza proporcionalmente mais larga — um IC "largo o suficiente para quase sempre acertar" é menos informativo, mesmo sendo mais honesto.</span></div>
+  <div class="step"><b>3.</b> O Detrend+RF, mesmo com o IC calibrado por bootstrap de resíduo implementado nesta sessão, também fica abaixo do nominal (27% CV, 13-45% backtest) — na mesma faixa dos métodos clássicos, não perto do SARIMA/híbrido.</div>
+  <div class="step"><b>4.</b> <span class="interp">A regressão bayesiana (testada por NUTS completo nesta sessão, 2026-10-12 — antes uma lacuna conhecida, hoje resolvida) é a mais calibrada dos 3 finalistas via CV expansiva (86,7%, a mais próxima do nominal de toda a bateria), mas cai no <em>backtest</em> mais exigente (66,7% a 36 meses, 45,5% a 60 meses) — o mesmo padrão do Detrend+RF, não uma calibração perfeita e uniforme. A leitura honesta de conjunto: dos 3 finalistas, só a regressão bayesiana sustenta leitura como IC aproximadamente calibrado, e só via um dos dois critérios de validação.</span></div>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Dos 3 finalistas, qual tem a cobertura de IC90% mais próxima do nominal (90%) via CV expansiva, e por quê?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Detrend+RF, porque seu bootstrap de resíduo usa 200 réplicas por fold.</button>
+    <button class="opt" data-correct="true">Regressão bayesiana, porque seu IC usa a posterior completa (slope+sigma).</button>
+    <button class="opt" data-correct="false">Híbrido SARIMA+Prophet, porque herda o IC nativo do SARIMA sozinho.</button>
+    <button class="opt" data-correct="false">Nenhum dos três — a cobertura de todos é idêntica nesta bateria.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: os dois achados desta lição, em uma frase cada.</summary>
+  <div class="answer">
+    <strong>1. Gap de overfitting:</strong> o Detrend+RF tem o melhor RMSE in-sample (19,4) mas o pior RMSE de CV (76,7) entre os 4 — sinal clássico de overfitting que só aparece quando você olha além do ajuste na própria série de treino.<br>
+    <strong>2. Calibração de IC:</strong> dos 3 finalistas, só a regressão bayesiana chega perto do nominal via CV expansiva (86,7%) — Detrend+RF e híbrido ficam abaixo (26,7% e 75,0%); MK/Theil-Sen/OLS, fora dos finalistas, cobrem só ~27-38%.<br>
+    <span class="interp">Os dois achados reforçam a mesma mensagem de fundo do projeto (Lição 0005/0006): nenhum método único domina em todos os critérios — e agora sabemos, com números, que isso vale também para a confiabilidade da própria incerteza reportada.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode detalhar como o IC bootstrap do Detrend+RF foi implementado (injeção de resíduo do treino por passo recursivo), por que a validação cruzada expansiva usa 5 folds especificamente, ou simular a pergunta "por que vocês não recalibraram o IC do MK/Theil-Sen/OLS para ficar mais largo?".
+</div>
+
+<nav class="lesson-nav">
+  <a href="0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">← 0006 — Métodos adicionais e os 3 finalistas</a>
+  <a href="0008-objetivos-secundarios.html" target="_blank" rel="noopener noreferrer">Próxima: 0008 — Objetivos secundários →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

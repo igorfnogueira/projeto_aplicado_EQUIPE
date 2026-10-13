@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referência — Glossário estatístico</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  dl.gloss { margin: 1.2rem 0; }
+  dl.gloss dt { font-weight: 600; margin-top: 1.3rem; color: var(--ink); }
+  dl.gloss dd { margin: 0.3rem 0 0; }
+  dl.gloss .why { color: var(--ink-soft); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<div class="kicker">Referência · Defesa do TCC — TDS/LAGWRP</div>
+<h1>Glossário estatístico</h1>
+<p class="lead">Os termos técnicos que mais aparecem nas lições, numa definição curta cada — para consulta rápida antes da banca, não para reler o curso inteiro. Cheat sheet, não lição.</p>
+
+<dl class="gloss">
+  <dt id="p-valor">p-valor</dt>
+  <dd>A probabilidade de observar um efeito tão forte quanto o medido (ex. uma inclinação de tendência) <strong>se, na realidade, não houvesse efeito nenhum</strong> (hipótese nula). Quanto menor, menos plausível é que o resultado seja só ruído de amostra. A convenção de citar "significativo" quando p&lt;0,05 é um corte arbitrário da comunidade científica, não uma lei — por isso o projeto sempre cita o número exato (ex. p=0,0056), não só "significativo/não".</dd>
+  <dd class="why">Por que importa: o projeto tem pelo menos um caso onde a conclusão muda de "significativo" pra "não significativo" dependendo só de qual correção estatística é usada no mesmo teste (<a href="../reference/decisoes-citadas.html#D-15" target="_blank" rel="noopener noreferrer">D-15</a>) — citar "p pequeno" sem o número exato esconderia essa fragilidade.</dd>
+  <dd class="why">Lições: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>, <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>, <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</dd>
+
+  <dt id="r2">R² (coeficiente de determinação)</dt>
+  <dd>Mede a fração da variância dos dados reais que o modelo explica, comparado a simplesmente prever a média constante. R²=1 seria ajuste perfeito; R²=0 significa "não é melhor que prever a média". <strong>A parte que mais confunde:</strong> diferente do R² que se aprende em sala de aula (sempre entre 0 e 1, calculado só dentro da amostra de treino), o R² de <em>holdout</em>/validação deste projeto pode ser <strong>negativo</strong> — significa que o modelo erra <em>mais</em> do que simplesmente chutar a média da série naquele período de teste.</dd>
+  <dd class="why">Por que importa: um R² negativo no holdout não invalida um método de tendência de longo prazo (ele pode acertar a direção geral e ainda errar feio no curto prazo) — mas é exatamente o tipo de número que, sem essa explicação, parece um erro ou uma falha do projeto para quem só olha o valor.</dd>
+  <dd class="why">Lições: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>.</dd>
+
+  <dt id="ic90">IC90% (intervalo de confiança de 90%)</dt>
+  <dd>Faixa que, se o experimento fosse repetido muitas vezes, conteria o valor real em 90% das vezes — <em>se estiver bem calibrado</em>. O projeto testou isso de verdade em vez de assumir (ver "cobertura empírica").</dd>
+  <dd class="why">Por que importa: quase todo gráfico de previsão do projeto mostra um IC90% — saber que "90%" é uma meta, não uma garantia automática, é o que evita um tropeço de banca.</dd>
+  <dd class="why">Lições: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt>Cobertura empírica do IC90%</dt>
+  <dd>Percentual de observações de validação (CV expansiva ou <em>backtest</em>) que de fato caem dentro do IC90% projetado. Se o IC estiver bem calibrado, deveria ficar perto de 90%. No projeto, varia de ~27% (Mann-Kendall/Sen, Theil-Sen, OLS) a ~87% (regressão bayesiana via CV) — nunca uniformemente perto do nominal.</dd>
+  <dd class="why">Lição: <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt id="rmse">RMSE (Root Mean Squared Error)</dt>
+  <dd>Raiz quadrada do erro médio ao quadrado entre a previsão e o valor real, na mesma unidade da série (mg/L, no projeto). Ao elevar ao quadrado antes de tirar a média, erros grandes pesam desproporcionalmente mais que vários erros pequenos — por isso RMSE é mais sensível a um mês muito errado do que o MAE (erro absoluto médio).</dd>
+  <dd class="why">Por que importa: é o número mais citado pra comparar o "tamanho do erro" entre métodos — mas só é comparável em valor absoluto entre séries da mesma escala (mg/L de TDS), por isso o projeto usa MASE quando precisa comparar contra o baseline naive.</dd>
+  <dd class="why">Lições: <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>, <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt id="mase">MASE (Mean Absolute Scaled Error)</dt>
+  <dd>Erro médio absoluto do método, dividido pelo erro médio absoluto de um <em>baseline naive</em> simples. MASE &lt; 1 significa "melhor que só repetir o último valor"; MASE &gt; 1 significa "pior que o baseline mais simples possível".</dd>
+  <dd class="why">Por que importa: é o critério comparável entre métodos de escalas de erro diferentes — usado para comparar os 21+ métodos da bateria num único número.</dd>
+  <dd class="why">Lições: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>, <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>.</dd>
+
+  <dt>CV expansiva (<em>expanding window cross-validation</em>)</dt>
+  <dd>Validação cruzada para série temporal: a janela de treino cresce a cada <em>fold</em> (nunca encolhe, nunca embaralha no tempo), e cada fold testa num trecho futuro que o modelo ainda não viu naquele ajuste. O projeto usa 5 folds.</dd>
+  <dd class="why">Por que importa: validação cruzada "normal" (k-fold embaralhado) vazaria dado do futuro para o treino — inválido em série temporal.</dd>
+  <dd class="why">Lição: <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt><em>Backtest</em> de origem móvel</dt>
+  <dd>Variante do CV expansiva: em vez de poucos folds fixos, desloca a "origem" (ponto de corte treino/teste) em passos regulares (6 meses no projeto) por toda a série, testando a cada horizonte fixo (36 ou 60 meses). Gera mais pontos de validação que o CV expansiva, mais caro computacionalmente.</dd>
+  <dd class="why">Lição: <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt>Diebold-Mariano (teste de)</dt>
+  <dd>Teste estatístico para saber se a diferença de erro de previsão entre dois métodos é estatisticamente real, não só ruído de amostra. Usa a correção HLN (Harvey-Leybourne-Newbold) para amostras pequenas, como aqui (24 meses de holdout).</dd>
+  <dd class="why">Por que importa: "o Detrend+RF tem RMSE menor que o SARIMA" não basta — o teste confirma que essa diferença é estatisticamente significativa (p=0,044), não coincidência do recorte de holdout escolhido.</dd>
+  <dd class="why">Lição: <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt>Ljung-Box / Shapiro-Wilk / ARCH (diagnóstico de resíduo)</dt>
+  <dd>Três testes aplicados ao resíduo (erro) de um modelo ajustado: Ljung-Box testa autocorrelação (o erro de um mês "prevê" o erro do mês seguinte — sinal de padrão não capturado), Shapiro-Wilk testa normalidade, ARCH testa heterocedasticidade condicional (a variância do erro muda com o tempo). Um resíduo "limpo" não rejeita nenhum dos três.</dd>
+  <dd class="why">Por que importa: é o critério que inicialmente parecia favorecer o Detrend+RF (resíduo in-sample limpo) — até o mesmo teste no resíduo de <em>holdout</em> mostrar que a limpeza não se sustenta fora da amostra de treino (Lição 0006).</dd>
+  <dd class="why">Lições: <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt id="nuts">NUTS / posterior (regressão bayesiana)</dt>
+  <dd><em>No-U-Turn Sampler</em>: algoritmo de amostragem MCMC usado pelo PyMC para estimar a distribuição posterior dos parâmetros (inclinação, intercepto, desvio-padrão do resíduo) de um modelo bayesiano. A previsão final usa a posterior completa — não um único valor — por isso o IC90% bayesiano cresce de forma suave com o horizonte, incorporando a incerteza do parâmetro e do resíduo juntas.</dd>
+  <dd class="why">Por que importa: é a diferença estrutural entre o IC da regressão bayesiana (posterior completa) e o IC da OLS (só a incerteza da inclinação) — mesmo sendo "o mesmo modelo linear" no ponto central, os dois ICs não são equivalentes.</dd>
+  <dd class="why">Lições: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</dd>
+
+  <dt>WRTDS / <em>flow-normalization</em></dt>
+  <dd><em>Weighted Regression on Time, Discharge, and Season</em> (Hirsch et al.) — método que separa, da tendência bruta de um poluente, a parte explicada pela vazão (descarta o efeito "mais ou menos água diluindo"), deixando só a tendência "normalizada pela vazão". Se essa tendência residual não é significativa, quase toda a tendência bruta é efeito de vazão, não de mais poluente entrando no sistema.</dd>
+  <dd class="why">Por que importa: é a primeira das duas provas quantitativas do mecanismo de diluição do projeto (a segunda é o balanço de massa).</dd>
+  <dd class="why">Lições: <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>.</dd>
+
+  <dt>Mann-Kendall / Sen's slope / Theil-Sen</dt>
+  <dd>Três métodos não-paramétricos de tendência: Mann-Kendall testa se existe tendência monotônica (sem assumir distribuição); Sen's slope e Theil-Sen estimam a inclinação dessa tendência pela mediana das inclinações entre todos os pares de pontos (robusto a outliers, diferente da OLS que usa mínimos quadrados).</dd>
+  <dd class="why">Lições: <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">0001</a>, <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>.</dd>
+
+  <dt>Leave-one-year-out (robustez de tendência)</dt>
+  <dd>Remove um ano inteiro da série por vez (ou os N primeiros anos, cumulativamente) e recalcula a tendência — testa se a inclinação reportada depende de um recorte específico do histórico, em vez de ser uma propriedade estável de toda a série.</dd>
+  <dd class="why">Por que importa: foi esse teste que revelou que a tendência de alta do projeto depende fortemente de 2011-2015 — removendo os 3-4 primeiros anos, o sinal da inclinação se inverte e fica significativo na direção oposta.</dd>
+  <dd class="why">Lição: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>.</dd>
+</dl>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) para aprofundar qualquer termo acima com o número exato do projeto, ou simular uma pergunta de banca que use esse termo.
+</div>
+
+<nav class="lesson-nav">
+  <a href="referencias-bibliograficas.html" target="_blank" rel="noopener noreferrer">← Bibliografia do projeto</a>
+  <a href="../lessons/0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">Lição 0001 — Mapa geral do projeto →</a>
+</nav>
+
+</body>
+</html>

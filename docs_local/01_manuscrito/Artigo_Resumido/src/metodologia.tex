@@ -1,0 +1,19 @@
+\section{Metodologia}
+
+\subsection{Fonte e descrição dos dados}
+
+Os dados vêm do portal eSMR do California Water Boards para a LAGWRP. Foram usados quatro parâmetros -- TDS, Cloreto, Amônia Total e BOD -- filtrando, para cada um, os pontos \texttt{EFF-001}/\texttt{EFF-001A} (unificados como o mesmo ponto físico de monitoramento, pré/pós-2012), \texttt{Calculated Method} = ``Monthly Average (Mean)'' e \texttt{Units} = ``mg/L''. O período resultante cobre fevereiro de 2011 a março de 2026 (182 meses), sem meses faltantes.
+
+Das 182 médias mensais de BOD, 118 (65\%) são não detectadas (\texttt{Qual=ND}, MDL constante em 3,0~mg/L). Diante da ambiguidade entre a convenção interna do dado bruto (sugerindo zero) e a prática estatística padrão (MDL/2 ou Kaplan-Meier/ROS, conforme Antweiler e Taylor \cite{antweiler2008evaluation}), três datasets canônicos foram construídos (ND=MDL/2, ND=0, ND=ROS/Helsel) e a correlação TDS--BOD roda nos três em paralelo; os demais métodos, univariados em TDS, são insensíveis a essa escolha.
+
+\subsection{Bateria de métodos e validação}
+
+Foram aplicados 35 métodos: estatística clássica de tendência (Mann-Kendall/Sen, Theil-Sen, OLS), séries temporais (STL, SARIMA), árvores (Random Forest, XGBoost, LightGBM), Prophet e regressão bayesiana, quatro \textit{baselines} obrigatórios (naive, naive sazonal, ETS, Theta), e métodos adicionais (SVR, Gaussian Process, Detrend+árvore, SARIMAX multivariado com Cloreto, híbrido SARIMA+Prophet, LSTM, espaço de estados, GAM, regressão quantílica, análise de intervenção, modelo fundacional \textit{zero-shot}). Todos produzem previsão pontual e IC90\% para +10/+15/+20 anos e são avaliados sob o mesmo \textit{framework}: \textit{holdout} dos últimos 24 meses, MASE/sMAPE, validação cruzada expansiva de 5 \textit{folds} e \textit{backtesting} de origem móvel (+3/+5 anos) -- os únicos horizontes com dado real disponível para validar.
+
+\subsection{Reconstrução da vazão e métodos causais}
+
+O dataset traz o mesmo parâmetro em mg/L e lb/dia, relacionados por $\mathrm{lb/dia} = \mathrm{mg/L} \times \mathrm{vazao(MGD)} \times 8{,}34$, o que permite reconstruir a vazão do efluente (ausente do dataset original). A vazão derivada de TDS correlaciona 0,997--0,998 com a derivada de Cloreto/Amônia, validando a identidade. Isso habilitou três métodos causais: \textbf{WRTDS} (normalização por vazão, implementação própria baseada em Hirsch et al., 2010), que decompõe a tendência bruta em componente de vazão + componente residual; \textbf{balanço de massa}, que deriva $\mathrm{TDS} = \mathrm{carga} \div (\mathrm{vazao} \times 8{,}34)$ a partir da carga de sal observada diretamente; e \textbf{projeção por cenários climáticos}, que substitui a extrapolação linear (fisicamente implausível em horizontes longos) por uma simulação de Monte Carlo sobre um AR(1) ajustado ao PDSI histórico (1895--2026), com quatro cenários (seco/normal/úmido/agravamento).
+
+\subsection{PDSI como teste independente do reenquadramento cíclico}
+
+Para testar se o padrão cíclico identificado na série (Seção de Resultados) é explicado por ciclos de seca, a série de TDS foi cruzada com o Índice de Severidade de Seca de Palmer (PDSI) mensal do NOAA NCEI (três séries: Califórnia estadual, divisão de Los Angeles, divisão de Sacramento), via correlação cruzada com defasagem, detecção independente de \textit{changepoints} (teste de Pettitt, sem informar as datas do TDS) e decomposição de importância relativa (LMG) entre PDSI defasado e vazão reconstruída.

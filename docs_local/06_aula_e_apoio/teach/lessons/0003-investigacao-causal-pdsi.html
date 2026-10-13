@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0003 — Investigação causal: não é artefato, é seca</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.4rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0 1.4rem; font-size: 0.92rem;
+  }
+  .howto .step { margin: 0.35rem 0; }
+  .howto .step b { color: var(--accent); }
+  table.pdsi { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+  table.pdsi th, table.pdsi td { border-bottom: 1px solid var(--rule); padding: 0.35rem 0.5rem; text-align: left; }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0003 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>Não é artefato de instrumentação: é seca</h1>
+<p class="lead">Objetivo desta lição: saber descartar, com evidência, a hipótese mais óbvia de banca ("isso não é só um problema de troca de sensor/código de monitoramento?") e saber ler os dois gráficos de PDSI que confirmam o mecanismo com uma variável externa e independente.</p>
+<p class="source">Pré-requisito: <a href="0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">Lição 0002 — Tendência e sua fragilidade</a>. Fonte primária: <a href="../ROTEIRO_AULA_TDS_LAGWRP.md" target="_blank" rel="noopener noreferrer">ROTEIRO_AULA_TDS_LAGWRP.md</a>, Seção D; <a href="../AULA_JORNADA_DO_PROJETO.md" target="_blank" rel="noopener noreferrer">AULA_JORNADA_DO_PROJETO.md</a>, <a class="dcode" href="../reference/decisoes-citadas.html#D-12" target="_blank" rel="noopener noreferrer">D-12</a>–<a class="dcode" href="../reference/decisoes-citadas.html#D-14" target="_blank" rel="noopener noreferrer">D-14</a>.</p>
+
+<h2>Passo 1: a pergunta óbvia de banca, respondida com dados</h2>
+<p>A Lição 0002 mostrou que a tendência muda de sinal quando se removem os primeiros anos, e que esses anos coincidem com a transição de código <code>EFF-001</code>→<code>EFF-001A</code> (~2012). A pergunta natural é: <em>"então o padrão cíclico é real, ou é só um degrau artificial de troca de sensor?"</em></p>
+
+<div class="howto">
+  <strong>A hipótese foi testada e rejeitada — com 4 evidências, não com "achismo":</strong>
+  <div class="step"><b>1.</b> A transição é contínua mês a mês: 580 → 598 mg/L. Um degrau de instrumentação costuma criar um salto abrupto, não uma continuação suave.</div>
+  <div class="step"><b>2.</b> Mesmo método analítico antes e depois da transição.</div>
+  <div class="step"><b>3.</b> Mesmo limite de detecção (MDL) antes e depois <em>dessa transição específica</em> — atenção: isso é diferente da troca de MDL de 2011-06-04 vista na Lição 0002, que é um evento anterior e separado.</div>
+  <div class="step"><b>4.</b> Mesmas coordenadas geográficas — é o mesmo ponto físico de amostragem, só o código mudou.</div>
+  <div class="step"><strong>Conclusão:</strong> <span class="fact">o que existe não é um degrau de instrumentação, é um padrão cíclico real</span>: alta de 563→808 mg/L (2011–2015, 1ª seca), queda a 636 mg/L (2019), alta a 768 mg/L (2022, 2ª seca), recuo depois. Um teste de tendência <em>monotônica</em> simplesmente não tem poder estatístico para descrever um padrão que sobe e desce — por isso a fragilidade da Lição 0002 não contradiz isso, ela só mostra que "reta única" é a descrição errada.</div>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Qual evidência pesa contra a hipótese de que a transição EFF-001→EFF-001A criou um degrau artificial?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">O valor de TDS saltou de forma abrupta e descontínua na data exata.</button>
+    <button class="opt" data-correct="true">O valor de TDS mudou pouco e de forma contínua na data da troca.</button>
+    <button class="opt" data-correct="false">O método analítico de laboratório mudou junto com o código usado.</button>
+    <button class="opt" data-correct="false">As coordenadas geográficas do ponto de coleta mudaram na troca.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>Passo 2: testar o padrão cíclico contra uma variável externa — o PDSI</h2>
+<p>Em vez de só inspecionar visualmente a própria série de TDS (o que seria circular — "vejo um ciclo porque quero ver um ciclo"), o projeto testou o padrão contra o <strong>PDSI</strong> (Palmer Drought Severity Index, NOAA NCEI) — o mesmo índice climático que o <a href="../../../04_literatura/SCSC-TDS-Trends-Study.docx" target="_blank" rel="noopener noreferrer">estudo de referência da Southern California Salinity Coalition (2018)</a> usou para 26 estações do sul da Califórnia. Isso é o que torna o argumento causal forte: o PDSI não foi calculado a partir do TDS, é uma medida independente de seca.</p>
+<p class="source">Esse relatório é o único dos 5 estudos citados no projeto com texto completo lido na íntegra (não resumo) — é a referência que motivou testar o PDSI aqui. Detalhe: <a href="../reference/referencias-bibliograficas.html" target="_blank" rel="noopener noreferrer">Bibliografia do projeto</a>.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/pdsi-vs-tds-regimes.png" alt="TDS observado sobreposto ao PDSI invertido, com 5 regimes sombreados">
+      <figcaption>Figura do artigo (resultados.tex, linha 354): "TDS observado × PDSI invertido, com os 5 regimes identificados sombreados."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico:</strong>
+      <div class="step"><b>1.</b> Duas linhas sobrepostas: TDS observado (a série que já conhece) e o PDSI <em>invertido</em> — invertido porque PDSI negativo = seca, e a hipótese é "seca sobe TDS", então inverter alinha visualmente os picos.</div>
+      <div class="step"><b>2.</b> Faixas sombreadas de fundo marcam os 5 regimes identificados (os mesmos da Lição 0001/0002: alta 2011-2015, queda até 2019, alta até 2022, recuo depois).</div>
+      <div class="step"><b>3.</b> O que procurar: se as duas linhas sobem e descem <em>juntas</em> dentro de cada faixa sombreada, isso é evidência visual de sincronia. <span class="interp">O teste estatístico forte está na tabela a seguir, não só no olho — mas o gráfico é o que a banca vai olhar primeiro.</span></div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a primeira evidência visual de que o padrão cíclico do TDS não é ruído nem artefato — ele se move junto com uma variável externa e independente (o PDSI não foi calculado a partir do TDS).</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-14" target="_blank" rel="noopener noreferrer">D-14</a> — abandonar o enquadramento de "tendência monotônica" em favor de "ciclos ligados a seca".</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/pdsi-tds-correlacao-defasagem.png" alt="Correlação cruzada TDS x PDSI por defasagem de 0 a 36 meses">
+      <figcaption>Figura do artigo (resultados.tex, linha 361): "Correlação cruzada TDS × PDSI por defasagem (0-36 meses), bruta e destendenciada, para as três séries de PDSI."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico (o mais tecnicamente denso da lição):</strong>
+      <div class="step"><b>0. Primeiro, o que é "correlação cruzada por defasagem":</b> não é a correlação simples entre duas séries (um único número). O procedimento desloca a série de PDSI <em>k</em> meses para frente, recalcula a correlação com o TDS, anota o resultado, e repete para cada <em>k</em> de 0 a 36. O gráfico é esse "filme" de correlações — uma por defasagem testada — não uma foto única. <span class="interp">A intuição: se a seca de hoje só afeta o TDS daqui a alguns meses (o efeito leva tempo para se propagar pelo sistema), a correlação no deslocamento certo (k≈3-4) deve ser mais forte que a correlação no deslocamento zero.</span></div>
+      <div class="step"><b>1.</b> Eixo X = a defasagem <em>k</em> em meses (quantos meses o PDSI "antecede" o efeito no TDS); eixo Y = o coeficiente de correlação cruzada naquela defasagem. Há 3 linhas, uma por série de PDSI testada (Califórnia estadual, divisão de Los Angeles, divisão de Sacramento — a origem do <em>State Water Project</em>) — testar 3 fontes geográficas diferentes é uma checagem de robustez: se só a série "certa" desse resultado, seria mais fácil suspeitar de coincidência.</div>
+      <div class="step"><b>2.</b> Cada série de PDSI aparece em duas versões: a correlação <em>bruta</em> (sem remover tendência) e a <em>destendenciada</em> (removendo a tendência de longo prazo de cada série antes de correlacionar, para não confundir "as duas sobem com o tempo" com "uma realmente responde à outra"). <span class="fact">Isso é crucial: a correlação bruta é forte (r=-0,53 a -0,65) mas a destendenciada é bem mais fraca e muda de sinal (r=+0,15 a +0,19).</span></div>
+      <div class="step"><b>3.</b> Pico esperado: por volta de 3-4 meses de defasagem — é onde a correlação bruta é mais negativa (lembrando que "mais negativa" aqui = mais forte, porque PDSI baixo/seco associa com TDS alto).</div>
+      <div class="step"><b>4.</b> Pergunta de banca quase certa: "se a correlação destendenciada é mais fraca e muda de sinal, o PDSI explica o TDS ou não?" Resposta honesta (ver tabela abaixo): <span class="interp">o PDSI explica o nível médio de cada regime (a seca "empurra" o patamar do TDS para cima por um tempo), mas não explica bem a oscilação fina mês a mês dentro de um mesmo regime.</span> É uma leitura mais modesta que "seca prevê TDS mês a mês", e é a leitura correta a defender.</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Quantifica a evidência visual do gráfico anterior e dá a defasagem certa (3-4 meses) para a correlação mais forte — mas a queda da correlação destendenciada também é o que impede o projeto de afirmar "PDSI prevê TDS mês a mês": só justifica o nível do regime, não a oscilação fina.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-37" target="_blank" rel="noopener noreferrer">D-37</a> — PDSI como evidência causal corroborante (68-79% de importância relativa na decomposição LMG — Lindeman-Merenda-Gold, método estatístico que reparte a importância de cada variável explicativa num modelo com mais de uma); e a decisão de reportar essa leitura "nível de regime, não alta frequência" na conclusão do artigo, em vez de uma leitura mais forte que os dados não sustentam.</p>
+  </aside>
+</div>
+
+<table class="pdsi">
+<tr><th>Série de PDSI</th><th>Defasagem</th><th>r (bruta)</th><th>p (dof efetivo)</th><th>LMG PDSI</th></tr>
+<tr><td>Califórnia estadual</td><td>4 meses</td><td>-0,651</td><td>0,0003</td><td>79,3%</td></tr>
+<tr><td>Los Angeles (div. 6)</td><td>3 meses</td><td>-0,526</td><td>0,0126</td><td>67,5%</td></tr>
+<tr><td>Sacramento (div. 2)</td><td>4 meses</td><td>-0,563</td><td>0,0012</td><td>72,6%</td></tr>
+</table>
+<p class="source">Fonte: Tabela \ref{tab:pdsi-resultados} do artigo. "dof efetivo" = graus de liberdade efetivos corrigidos por autocorrelação (Pyper &amp; Peterman, 1998) — sem essa correção, o p-valor seria artificialmente otimista porque a amostra "real" de pontos independentes cai de ~180 para 22-30.</p>
+
+<div class="quiz" data-quiz>
+  <div class="q">O que a correlação PDSI x TDS destendenciada (mais fraca, sinal trocado) realmente indica?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Que a seca não tem relação nenhuma com o TDS em qualquer escala.</button>
+    <button class="opt" data-correct="true">Que a seca afeta o nível médio por regime, não a oscilação fina.</button>
+    <button class="opt" data-correct="false">Que o PDSI foi medido de forma incorreta pela NOAA no período.</button>
+    <button class="opt" data-correct="false">Que a vazão reconstruída está com erro sistemático de cálculo.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: cite as 4 linhas de evidência que ligam PDSI a TDS (parágrafo "Quatro linhas de evidência" do artigo).</summary>
+  <div class="answer">
+    <strong>1.</strong> Correlação bruta forte e significativa mesmo após corrigir graus de liberdade efetivos.<br>
+    <strong>2.</strong> Changepoints detectados <em>independentemente</em> no PDSI (sem informar datas do TDS ao algoritmo) coincidem com as 4 viradas de regime do TDS (2012, 2015, 2019, 2022).<br>
+    <strong>3.</strong> Decomposição LMG atribui 68-79% da importância relativa ao PDSI (vs. vazão), mesma ordem de grandeza do benchmark SCSC (~88% água de origem).<br>
+    <strong>4.</strong> O coeficiente do PDSI permanece altamente significativo (p&lt;0,0001) mesmo controlando por 5 <em>dummies</em> de regime — carrega informação além de só marcar o período.<br>
+    <span class="interp">Desfecho declarado a priori (dos 3 possíveis no protocolo do teste): "o PDSI explica bem os ciclos observados" — mas o mecanismo opera no nível de regime, não como resposta de alta frequência.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode explicar a correção de Pyper &amp; Peterman em mais detalhe, por que a decomposição LMG é usada em vez de um R² simples, ou simular a pergunta de banca "por que three séries de PDSI e não uma só?".
+</div>
+
+<nav class="lesson-nav">
+  <a href="0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">← 0002 — Tendência e sua fragilidade</a>
+  <a href="0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">Próxima: 0004 — WRTDS e balanço de massa →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

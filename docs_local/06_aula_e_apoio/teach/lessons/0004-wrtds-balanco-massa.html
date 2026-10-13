@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0004 — WRTDS e balanço de massa</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.4rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0 1.4rem; font-size: 0.92rem;
+  }
+  .howto .step { margin: 0.35rem 0; }
+  .howto .step b { color: var(--accent); }
+  table.wb { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+  table.wb th, table.wb td { border-bottom: 1px solid var(--rule); padding: 0.35rem 0.5rem; text-align: left; }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0004 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>O mecanismo, confirmado de duas formas independentes</h1>
+<p class="lead">Objetivo desta lição: fechar a investigação causal. Depois de ver que o padrão é cíclico (0002) e sincronizado com seca (0003), esta lição mostra as duas provas quantitativas de que o mecanismo é <strong>diluição por vazão</strong>, não mais sal entrando — e onde fica o limite dessa conclusão.</p>
+<p class="source">Pré-requisito: <a href="0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">Lição 0003 — Investigação causal: não é artefato, é seca</a>. Fonte primária: <a href="../ROTEIRO_AULA_TDS_LAGWRP.md" target="_blank" rel="noopener noreferrer">ROTEIRO_AULA_TDS_LAGWRP.md</a>, Seção E; <a href="../AULA_JORNADA_DO_PROJETO.md" target="_blank" rel="noopener noreferrer">AULA_JORNADA_DO_PROJETO.md</a>, <a class="dcode" href="../reference/decisoes-citadas.html#D-37" target="_blank" rel="noopener noreferrer">D-37</a>–<a class="dcode" href="../reference/decisoes-citadas.html#D-40" target="_blank" rel="noopener noreferrer">D-40</a>.</p>
+
+<h2>Prova 1: WRTDS — a tendência quase desaparece ao descontar a vazão</h2>
+<p><strong>WRTDS</strong> (Weighted Regression on Time, Discharge, and Season) é uma técnica consolidada em hidrologia para separar "quanto da tendência observada é efeito de vazão" de "quanto é tendência independente da vazão" (<code>script_19_wrtds.py</code>). A lógica: ajustar a série como função de tempo + vazão + sazonalidade, depois recalcular a previsão <em>mantendo a vazão fixa na média histórica</em> — essa versão "flow-normalized" mostra como a série teria se comportado se a vazão não tivesse mudado.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/wrtds-flow-normalized.png" alt="TDS ajustado pelo WRTDS e versão flow-normalized">
+      <figcaption>Figura do artigo (resultados.tex, linha 390): "WRTDS: TDS ajustado e flow-normalized (efeito da vazão descontado)."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico:</strong>
+      <div class="step"><b>1.</b> Três linhas: TDS observado (cinza, ao fundo, com ruído), o ajuste WRTDS "fitted" (azul — a mesma série, só suavizada pelo modelo) e a versão "flow-normalized" (vermelha, mais grossa — com o efeito da vazão descontado).</div>
+      <div class="step"><b>2.</b> O que procurar: <span class="fact">se a linha vermelha sobe muito menos (ou quase nada) comparada à azul/cinza, isso significa que a maior parte da subida observada é explicada pela vazão variando</span> — não por mais sal entrando no sistema.</div>
+      <div class="step"><b>3.</b> O número que fecha a leitura: a tendência bruta de log(TDS) é +0,582%/ano (p=0,0056, significativa). Depois da flow-normalização, cai para -0,133%/ano (<strong>p=0,064, não significativa</strong>). Quase toda a tendência aparente desaparece.</div>
+      <div class="step"><b>4.</b> Pergunta de banca: "WRTDS normalmente é usado para rios/bacias, por que serve aqui para um efluente de ETE?" Resposta: a lógica estatística (separar tendência temporal de tendência induzida pela vazão) é genérica — não depende de ser rio ou efluente, só exige vazão e concentração medidas no mesmo ponto/período, que é exatamente o caso aqui (vazão reconstruída na Lição 0001/0002 via <a class="dcode" href="../reference/decisoes-citadas.html#D-12" target="_blank" rel="noopener noreferrer">D-12</a>).</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: WRTDS</summary>
+      <div class="body">
+        <dl>
+          <dt>WRTDS (Weighted Regression on Time, Discharge, and Season)</dt>
+          <dd>Regressão ponderada localmente de log(TDS) sobre tempo, log(vazão) e sazonalidade (kernel tricúbico — pontos mais próximos pesam mais). A "flow-normalização" recalcula a previsão mantendo a vazão fixa na média histórica em cada instante, isolando quanto da tendência é só efeito de vazão variando.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#wrtds" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a primeira prova quantitativa de que o mecanismo é diluição, não mais sal entrando: a tendência deixa de ser estatisticamente significativa assim que se descota o efeito da vazão. Sem esse resultado, "diluição" seria só uma hipótese plausível, não um achado testado.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-39" target="_blank" rel="noopener noreferrer">D-39</a> — confirmar que não há tendência de TDS residual depois de descontar vazão, reforçando o enquadramento causal de <a class="dcode" href="../reference/decisoes-citadas.html#D-14" target="_blank" rel="noopener noreferrer">D-14</a>/<a class="dcode" href="../reference/decisoes-citadas.html#D-37" target="_blank" rel="noopener noreferrer">D-37</a>.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/wrtds-circularidade.png" alt="Checagem de circularidade: flow-normalização com vazão de TDS vs de Cloreto">
+      <figcaption>Figura do artigo (resultados.tex, linha 397): "Checagem de circularidade: flow-normalização com vazão derivada de TDS vs. de Cloreto."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico — e por que ele existe:</strong>
+      <div class="step"><b>1.</b> Problema a resolver: a vazão usada acima foi <em>reconstruída a partir do próprio TDS</em> (identidade lb/dia = mg/L × vazão × 8,34). Usar essa vazão para "explicar" o TDS seria circular — like usar o resultado para provar o resultado.</div>
+      <div class="step"><b>2.</b> Solução: refazer o WRTDS inteiro com uma vazão reconstruída a partir do <strong>Cloreto</strong> em vez do TDS — uma variável diferente, medida na mesma amostra física, mas algebricamente independente do valor de TDS.</div>
+      <div class="step"><b>3.</b> O que procurar no gráfico: duas linhas (vermelha = flow-normalized via vazão de TDS; verde tracejada = via vazão de Cloreto) quase perfeitamente sobrepostas. <span class="interp">Se elas coincidem mesmo vindo de uma vazão calculada de forma totalmente independente, o resultado não é um artefato circular.</span></div>
+      <div class="step"><b>4.</b> Números que confirmam: correlação r=0,998 entre as duas versões, diferença de apenas 0,024 pontos percentuais/ano na tendência (-0,133%/ano via TDS vs -0,158%/ano via Cloreto, p=0,033 nesta última).</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Blinda a Prova 1 contra a objeção mais óbvia de banca ("vocês usaram o próprio TDS para calcular a vazão que 'explica' o TDS?"). Sem essa checagem, o resultado do WRTDS seria vulnerável a essa crítica metodológica.</p>
+    <p class="afeta">Afeta: a credibilidade de <a class="dcode" href="../reference/decisoes-citadas.html#D-39" target="_blank" rel="noopener noreferrer">D-39</a> — é o que permite defender o resultado do WRTDS como causal e não circular.</p>
+  </aside>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que o WRTDS foi refeito com vazão derivada do Cloreto, e não só do TDS?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque a vazão derivada de TDS tinha muitos valores ausentes na série.</button>
+    <button class="opt" data-correct="true">Para evitar circularidade: testar com uma variável independente do TDS.</button>
+    <button class="opt" data-correct="false">Porque o Cloreto é o poluente regulado oficialmente pela agência ambiental.</button>
+    <button class="opt" data-correct="false">Porque o laboratório mede Cloreto com mais frequência que TDS por mês.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>Prova 2: balanço de massa — carga de sal caindo, não subindo</h2>
+<p>O WRTDS mostra que a vazão explica a tendência estatisticamente. O balanço de massa (<code>script_20_balanco_massa.py</code>) mostra o mecanismo físico por trás: decompõe o TDS nos dois ingredientes que o compõem — quanto sal entra (carga, lb/dia, medida direta) e quanto de água dilui esse sal (vazão, via Cloreto).</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/balanco-massa-decomposicao.png" alt="Três painéis: carga de sal, vazão via Cloreto, e TDS observado vs derivado">
+      <figcaption>Figura do artigo (resultados.tex, linha 410): "Decomposição do balanço de massa: carga de sal, vazão e TDS derivado vs. observado."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico — 3 painéis empilhados, mesmo eixo X (tempo):</strong>
+      <div class="step"><b>Painel 1 (carga de sal, lb/dia):</b> quanto sal, em peso, sai da estação por dia — <strong>caindo</strong> a -3,20%/ano (p&lt;0,0001).</div>
+      <div class="step"><b>Painel 2 (vazão via Cloreto, MGD):</b> quanta água efluente sai por dia — também <strong>caindo</strong>, a -3,85%/ano (p&lt;0,0001), um pouco mais rápido que a carga.</div>
+      <div class="step"><b>Painel 3 (TDS observado vs. derivado):</b> o TDS real (preto) contra o TDS <em>recalculado</em> a partir só dos painéis 1 e 2 (carga ÷ vazão × 8,34, linha laranja tracejada). Se as duas linhas seguem juntas, a identidade física está confirmada contra dados reais, não só na teoria.</div>
+      <div class="step"><strong>A virada de raciocínio nesta figura:</strong> <span class="fact">como os dois ingredientes (carga e vazão) caem juntos, e a vazão cai um pouco mais rápido, o TDS = carga/vazão sobe — mesmo com MENOS sal entrando.</span> É isso que "diluição, não mais sal" significa em números: o numerador cai, mas o denominador cai mais rápido, então a razão sobe.</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: balanço de massa</summary>
+      <div class="body">
+        <dl>
+          <dt>Balanço de massa</dt>
+          <dd>Não é um modelo estatístico ajustado à série de TDS — é uma identidade física direta: <code>TDS = carga(lb/dia) ÷ (vazão(MGD) × 8,34)</code>. Decompõe a tendência nos dois componentes físicos medidos separadamente (quanto sal entra, quanto de água dilui), em vez de inferir o mecanismo indiretamente.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#balanco-massa" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a segunda prova do mecanismo, por um caminho matemático totalmente diferente do WRTDS (físico/contábil, não estatístico) — e a que dá a frase mais citável do projeto: "cai menos sal, mas sobe a salinidade", porque a vazão cai mais rápido que a carga.</p>
+    <p>Esse mesmo mecanismo (TDS sobe com reúso de água mesmo com carga total caindo) foi encontrado independentemente por <a href="https://pubs.acs.org/doi/10.1021/acsestwater.2c00005" target="_blank" rel="noopener noreferrer">Wolfand et al. 2022</a> na bacia do rio Los Angeles — onde a LAGWRP descarrega (resumo; detalhe: <a href="../reference/referencias-bibliograficas.html" target="_blank" rel="noopener noreferrer">Bibliografia do projeto</a>).</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-40" target="_blank" rel="noopener noreferrer">D-40</a> — confirmação física da diluição, complementando a confirmação estatística do WRTDS (<a class="dcode" href="../reference/decisoes-citadas.html#D-39" target="_blank" rel="noopener noreferrer">D-39</a>).</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/balanco-massa-validacao.png" alt="Dispersão: TDS observado vs TDS derivado do balanço de massa, com linha y=x">
+      <figcaption>Figura do artigo (resultados.tex, linha 417): "Validação histórica: TDS observado vs. TDS derivado (carga ÷ vazão de Cloreto)."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico de dispersão:</strong>
+      <div class="step"><b>1.</b> Eixo X = TDS observado (mg/L); eixo Y = TDS derivado da identidade (carga/vazão); cada ponto é um mês. A linha tracejada diagonal é <code>y=x</code> — o "acerto perfeito".</div>
+      <div class="step"><b>2.</b> Quanto mais os pontos colam na diagonal, melhor a identidade física explica os dados reais. Aqui: RMSE=19,1 mg/L, r=0,973, <a href="../reference/glossario-estatistico.html#r2" target="_blank" rel="noopener noreferrer">R²</a>=0,941 — um ajuste forte, mas não perfeito (há ruído de medição e amostragem entre carga/vazão/TDS que não cancela 100%).</div>
+      <div class="step"><b>3.</b> Checagem de tautologia (não tem gráfico próprio, mas é citada no texto): repetir essa mesma validação usando a vazão derivada do <em>próprio</em> TDS (em vez da de Cloreto) dá R²=1,000000 <strong>exato</strong>. <span class="interp">Isso confirma que essa versão alternativa seria uma identidade algébrica disfarçada de validação — não prova nada, só reafirma a própria fórmula usada para calculá-la.</span> Por isso a validação "de verdade" (a que vale citar) é a que usa vazão de Cloreto, com R²=0,941 — imperfeito, mas real.</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Dá credibilidade numérica à Prova 2: mostra que a identidade física bate com os dados reais (não é só álgebra circular), mesma lógica de independência já usada na checagem de circularidade do WRTDS. Os dois <a href="../reference/glossario-estatistico.html#r2" target="_blank" rel="noopener noreferrer">R²</a> citados medem a mesma coisa (quanto <code>carga÷vazão</code> prevê o TDS observado) mas não são comparáveis: 0,941 usa vazão derivada do Cloreto (independente do TDS, validação real); 1,000000 usa vazão derivada do próprio TDS, o que torna a "previsão" uma identidade algébrica por construção, não um teste de verdade — por isso só o primeiro conta como evidência.</p>
+    <p class="afeta">Afeta: a credibilidade de <a class="dcode" href="../reference/decisoes-citadas.html#D-40" target="_blank" rel="noopener noreferrer">D-40</a> — justifica reportar o R²=0,941 (via Cloreto) como a validação real, e descartar o R²=1,000000 (via TDS) como tautológico.</p>
+  </aside>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que a validação histórica com vazão derivada do próprio TDS dá R²=1,000000 exato?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque o modelo de balanço de massa é extremamente preciso na prática.</button>
+    <button class="opt" data-correct="true">Porque essa versão é uma identidade algébrica, não uma validação real.</button>
+    <button class="opt" data-correct="false">Porque o Cloreto tem erro de medição maior que o TDS na mesma amostra.</button>
+    <button class="opt" data-correct="false">Porque a vazão de TDS usa um instrumento mais calibrado que o de Cloreto.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>O limite da conclusão: extrapolar essas retas é implausível</h2>
+<p>O achado é físico e robusto <em>dentro</em> do período observado — mas o artigo registra honestamente um achado negativo: extrapolar linearmente (Theil-Sen) a carga e a vazão para +10/+15/+20 anos cruza valores fisicamente impossíveis.</p>
+
+<table class="wb">
+<tr><th>Horizonte</th><th>Vazão projetada</th><th>TDS derivado</th></tr>
+<tr><td>+10 anos</td><td>14% da capacidade nominal</td><td>993 mg/L</td></tr>
+<tr><td>+15 anos</td><td>5% da capacidade nominal</td><td>1.724 mg/L</td></tr>
+<tr><td>+20 anos</td><td><strong>negativa</strong> (impossível)</td><td>1.557 mg/L (não-monotônico)</td></tr>
+</table>
+<p class="source">Fonte: resultados.tex, parágrafo "Achado negativo, registrado e não escondido" (linha 422).</p>
+
+<div class="howto">
+  <strong>Por que isso importa para a banca:</strong>
+  <div class="step"><b>1.</b> Vazão não pode ser negativa — isso por si só prova que a extrapolação linear simples não é um modelo físico válido para horizontes longos.</div>
+  <div class="step"><b>2.</b> O TDS derivado nem sobe de forma monotônica (993→1.724→1.557) — outro sinal de que a extrapolação linear colapsa fora da faixa observada.</div>
+  <div class="step"><b>3.</b> <span class="interp">Isso não invalida o mecanismo de diluição (confirmado dentro do período observado) — só invalida usar retas lineares de carga/vazão para prever 20 anos no futuro.</span> É exatamente o que motiva a próxima etapa do projeto: substituir a extrapolação linear implausível por uma projeção condicionada a cenários de seca via PDSI (<code>script_21_cenarios.py</code> — fora do escopo desta lição, mencionar à banca se perguntarem "e a previsão de longo prazo, então?").</div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: as duas provas independentes do mecanismo de diluição, e o que cada uma mede.</summary>
+  <div class="answer">
+    <strong>1. WRTDS</strong> — mede estatisticamente: tendência bruta de log(TDS) +0,582%/ano (significativa) cai para -0,133%/ano (não significativa) ao descontar a vazão. Checagem de circularidade com vazão de Cloreto confirma (r=0,998 entre as duas versões).<br>
+    <strong>2. Balanço de massa</strong> — mede fisicamente: carga de sal cai -3,20%/ano, vazão cai -3,85%/ano (ambos p&lt;0,0001) — a vazão cai mais rápido que a carga, então a razão (TDS) sobe mesmo com menos sal entrando. Validação histórica R²=0,941 (não tautológica, via vazão de Cloreto).<br>
+    <span class="interp">As duas convergem na mesma conclusão por caminhos matemáticos diferentes — é isso que torna o argumento causal forte, não só uma correlação isolada.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode detalhar a formulação do WRTDS (regressão ponderada por tempo/vazão/estação), explicar por que R²=0,941 e não mais alto no balanço de massa, ou simular a pergunta "e se a vazão fosse medida direto, sem precisar reconstruir?".
+</div>
+
+<nav class="lesson-nav">
+  <a href="0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">← 0003 — Investigação causal: não é artefato, é seca</a>
+  <a href="0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">Próxima: 0005 — A bateria de 10 métodos e os baselines →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

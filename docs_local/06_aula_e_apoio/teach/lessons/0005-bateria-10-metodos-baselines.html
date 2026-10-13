@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0005 — A bateria de 10 métodos e os baselines</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.4rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0 1.4rem; font-size: 0.92rem;
+  }
+  .howto .step { margin: 0.35rem 0; }
+  .howto .step b { color: var(--accent); }
+  table.syn { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.82rem; }
+  table.syn th, table.syn td { border-bottom: 1px solid var(--rule); padding: 0.3rem 0.45rem; text-align: left; }
+  table.syn tr.tree td { color: var(--accent); }
+  table.syn tr.stat td { color: var(--fact); }
+  .badge { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 0.1em 0.5em; border-radius: 10px; margin-left: 0.4em; }
+  .badge.stat { background: var(--fact-bg); color: var(--fact); }
+  .badge.tree { background: var(--accent-soft); color: var(--accent); }
+  .badge.adapt { background: var(--code-bg); color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0005 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>Dez métodos, um padrão claro — e um baseline que vence todos</h1>
+<p class="lead">Objetivo desta lição: entender por que a bateria de previsão não tem "um modelo vencedor", e sim três grupos de comportamento — e saber defender o achado mais contraintuitivo do artigo: o baseline mais simples de todos tem o menor erro de curto prazo.</p>
+<p class="source">Pré-requisito: <a href="0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">Lição 0002 — Tendência e sua fragilidade</a> (os 3 métodos clássicos já vistos ali são a base de comparação aqui). Fonte primária: <a href="../ROTEIRO_AULA_TDS_LAGWRP.md" target="_blank" rel="noopener noreferrer">ROTEIRO_AULA_TDS_LAGWRP.md</a>, Seção B.</p>
+
+<h2>1. STL + tendência e SARIMA — os dois métodos de série temporal clássica</h2>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/stl-sarima-tds.png" alt="Decomposição STL e previsão por STL+tendência e SARIMA">
+      <figcaption>Figura do artigo (resultados.tex, linha 61): "Decomposição STL da série de TDS e previsão por STL+tendência linear e SARIMA, com incerteza para +10/+15/+20 anos."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler — padrão que vale para quase todos os gráficos desta lição:</strong>
+      <div class="step"><b>Painel superior</b> (quando houver): a decomposição STL em si (tendência suave + sazonalidade), já vista na Lição 0002.</div>
+      <div class="step"><b>Painel inferior:</b> a série observada (à esquerda) seguida de duas ou mais extrapolações (à direita) com sua banda de incerteza (IC90%) alargando com o horizonte.</div>
+      <div class="step"><b>O que procurar sempre:</b> (a) a inclinação da reta/curva extrapolada — é o número da tabela de tendência; (b) a largura da banda de incerteza nos horizontes mais longos — quanto mais larga, menos o modelo "confia" na própria extrapolação.</div>
+      <div class="step"><b>Achado específico aqui:</b> STL+tendência (2,92 mg/L/ano) fica na mesma faixa dos métodos clássicos da Lição 0002. O SARIMA <strong>amplifica</strong> a tendência para 10,43 mg/L/ano — quase 3x mais — porque sua melhor ordem por AIC (<em>Akaike Information Criterion</em>, critério que equilibra qualidade de ajuste e simplicidade do modelo) não inclui um termo de <em>drift</em> explícito; a tendência de longo prazo emerge indiretamente da diferenciação sazonal dupla, um mecanismo totalmente diferente de "ajustar uma reta". O IC90% do SARIMA cresce tão rápido que já inclui valores <strong>negativos</strong> de TDS em +15 anos (-94,3 mg/L) — o próprio modelo sinalizando que está extrapolando demais, não um bug.</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: SARIMA</summary>
+      <div class="body">
+        <dl>
+          <dt>SARIMA (Seasonal ARIMA)</dt>
+          <dd>Combina AR (regride no próprio passado), I (diferenciação, pra tornar a série estacionária) e MA (regride no erro de previsão dos passos anteriores), com versões sazonais de cada um. A ordem (p,d,q)(P,D,Q) é escolhida pelo menor AIC numa grade de combinações — aqui, sem termo de <em>drift</em>, a tendência emerge da diferenciação sazonal dupla, não de uma reta.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#sarima" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Mostra por que SARIMA não foi escolhido como finalista sozinho: a tendência que ele produz é um artefato de como ele diferencia a série, não uma leitura mais "sofisticada" da tendência real — um comportamento a evitar na escolha final.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> — critério de escolha dos 3 finalistas; o híbrido SARIMA+Prophet entra como envelope cauteloso, não o SARIMA isolado.</p>
+  </aside>
+</div>
+
+<h2>2. Random Forest, XGBoost e LightGBM — os três métodos de árvore</h2>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/random-forest-tds.png" alt="Previsão recursiva de TDS por Random Forest">
+      <figcaption>Figura do artigo (resultados.tex, linha 87): "Previsão recursiva de TDS por Random Forest (+10/+15/+20 anos), com intervalo empírico de dispersão entre as árvores da floresta."</figcaption>
+    </figure>
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/xgboost-lightgbm-tds.png" alt="Previsão recursiva de TDS por XGBoost e LightGBM">
+      <figcaption>Figura do artigo (resultados.tex, linha 98): "Previsão recursiva de TDS por XGBoost (GPU/CUDA) e LightGBM (CPU), com IC90% por regressão quantílica."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler — e a limitação estrutural que os três compartilham:</strong>
+      <div class="step"><b>1.</b> "Recursiva" quer dizer: o valor previsto de um mês se torna o <em>lag</em> (entrada) do mês seguinte. É assim que um modelo de árvore, que normalmente só prevê 1 passo, consegue prever 10-20 anos adiante.</div>
+      <div class="step"><b>2.</b> <span class="fact">O que procurar no Random Forest: a linha prevista "satura" — os três horizontes (+10, +15, +20 anos) convergem para o mesmo valor, 704,3 mg/L.</span> Isso não é coincidência nem erro: árvores de decisão não conseguem prever valores fora do intervalo visto no treino, então a previsão recursiva simplesmente para de subir.</div>
+      <div class="step"><b>3.</b> O que procurar no XGBoost: a previsão não é nem monotonicamente estável — 649,6 mg/L em +10 anos e também em +20 anos, mas 717,6 mg/L em +15 anos (sobe e desce). É um artefato de como o <em>boosting</em> de árvores rasas reage a features recursivas fora do range de treino.</div>
+      <div class="step"><b>4.</b> O número que resume os três: a tendência <em>implícita</em> nos primeiros 10 anos da previsão recursiva é negativa para os três (-0,25 a -0,91 mg/L/ano) — o oposto da tendência real, positiva e significativa (3,7-3,9 mg/L/ano). <span class="interp">Isto não é um defeito de implementação — é a limitação estrutural conhecida de modelos de árvore para extrapolação, reportada explicitamente em vez de escondida.</span></div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funcionam: Random Forest, XGBoost e LightGBM</summary>
+      <div class="body">
+        <dl>
+          <dt>Random Forest — <em>bagging</em></dt>
+          <dd>Treina muitas árvores de decisão, cada uma num reamostra <em>bootstrap</em> diferente dos dados e um subconjunto aleatório de features, e faz a média das previsões — reduz variância.</dd>
+          <dt>XGBoost / LightGBM — <em>gradient boosting</em></dt>
+          <dd>Diferente do bagging (árvores independentes), treina árvores <strong>sequencialmente</strong>, cada nova árvore corrigindo o erro (gradiente) deixado pelas anteriores. LightGBM usa a mesma ideia com uma estratégia de crescimento de árvore diferente (folha-a-folha, por histogramas) — mais rápido em datasets grandes.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#random-forest" target="_blank" rel="noopener noreferrer">Random Forest</a>, <a href="../reference/metodos-de-previsao.html#xgboost" target="_blank" rel="noopener noreferrer">XGBoost</a>, <a href="../reference/metodos-de-previsao.html#lightgbm" target="_blank" rel="noopener noreferrer">LightGBM</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Explica por que nenhuma árvore "pura" virou finalista, apesar de terem bom desempenho de curto prazo: a saturação/instabilidade na extrapolação de longo prazo desqualifica RF/XGBoost/LightGBM puros para responder a pergunta central do projeto (qual a direção de longo prazo).</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> — é por isso que o finalista de árvore é o <code>detrend_rf</code> (Lição 0006), que separa a tendência do resíduo antes de aplicar a árvore, não a árvore pura.</p>
+  </aside>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que a previsão do Random Forest satura no mesmo valor em +10/+15/+20 anos?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque o número de árvores da floresta foi configurado abaixo do ideal.</button>
+    <button class="opt" data-correct="true">Porque árvores não extrapolam além do intervalo visto no treino.</button>
+    <button class="opt" data-correct="false">Porque o holdout de 24 meses usado era muito curto para o ajuste.</button>
+    <button class="opt" data-correct="false">Porque a validação cruzada temporal encontrou hiperparâmetros errados.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>3. Prophet e regressão bayesiana — os dois métodos de tendência "adaptativa"</h2>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/prophet-bayes-tds.png" alt="Previsão de TDS por Prophet e regressão bayesiana">
+      <figcaption>Figura do artigo (resultados.tex, linha 129): "Previsão de TDS por Prophet e regressão bayesiana (PyMC/NUTS), com IC90% para +10/+15/+20 anos."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler — e o achado inesperado do Prophet:</strong>
+      <div class="step"><b>1.</b> Regressão bayesiana: praticamente idêntica à OLS (3,74 mg/L/ano) — faz sentido, é o mesmo modelo linear, só que ajustado por amostragem da posterior (PyMC/NUTS) em vez de máxima verossimilhança. 99,88% de probabilidade posterior da tendência ser positiva.</div>
+      <div class="step"><b>2.</b> <span class="fact">A vantagem real da versão bayesiana não é o ponto central, é o IC: ele cresce de forma suave e proporcional ao horizonte (268,9 mg/L em +10 anos → 279,7 mg/L em +20 anos)</span> — o comportamento "honesto" que motivou incluir este método (é um dos 3 finalistas, Lição 0001).</div>
+      <div class="step"><b>3.</b> O Prophet detecta a tendência histórica corretamente (3,81 mg/L/ano, p&lt;0,0001) — mas sua <strong>extrapolação cai</strong>: a componente de tendência vai de 688,7 mg/L (último mês observado) para 634,7 mg/L em +20 anos. Causa: o Prophet detecta automaticamente um <em>changepoint</em> perto do fim da série (uma desaceleração/reversão local recente) e extrapola essa inclinação recente, não a média de 15 anos.</div>
+      <div class="step"><b>4.</b> <span class="interp">Isso é um achado metodológico genuíno, não um erro corrigido: modelos de tendência linear por partes podem discordar fortemente da tendência de longo prazo, mesmo detectando-a corretamente na história.</span></div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funcionam: Prophet e regressão bayesiana</summary>
+      <div class="body">
+        <dl>
+          <dt>Prophet</dt>
+          <dd>Modelo aditivo decomponível (tendência + sazonalidade), Meta/Facebook — tendência linear por partes, com <em>changepoints</em> (pontos de mudança de inclinação) detectados automaticamente. Ajustado via inferência bayesiana (Stan) por baixo dos panos.</dd>
+          <dt>Regressão bayesiana</dt>
+          <dd>O mesmo modelo linear da OLS, mas ajustado por inferência bayesiana (priors + verossimilhança → posterior) via amostragem MCMC (<em>Markov Chain Monte Carlo</em>, família de algoritmos que amostra uma distribuição complexa simulando uma cadeia de passos aleatórios; PyMC/NUTS) em vez de mínimos quadrados — a posterior completa (não um único valor) faz o IC incorporar incerteza do parâmetro <strong>e</strong> do resíduo juntas.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#prophet" target="_blank" rel="noopener noreferrer">Prophet</a>, <a href="../reference/metodos-de-previsao.html#regressao-bayesiana" target="_blank" rel="noopener noreferrer">regressão bayesiana</a>. Glossário: <a href="../reference/glossario-estatistico.html" target="_blank" rel="noopener noreferrer">NUTS/posterior</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Justifica por que a regressão bayesiana (não o Prophet puro) é finalista: é o único método com incerteza genuinamente honesta e crescente, uma propriedade estrutural, não um ajuste pós-hoc — o Prophet entra como parte do híbrido, não sozinho, porque sua extrapolação de tendência é instável.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> — justificativa específica da escolha de <code>regressao_bayesiana</code> como finalista ("incerteza genuinamente honesta e crescente com o horizonte").</p>
+  </aside>
+</div>
+
+<h2>4. Os 4 baselines obrigatórios — o "piso" de comparação</h2>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/baselines-tds.png" alt="Previsão dos 4 baselines: naive, naive sazonal, ETS/Holt-Winters e Theta">
+      <figcaption>Figura do artigo (resultados.tex, linha 173): "Baselines obrigatórios — naive, naive sazonal, ETS/Holt-Winters e Theta — com IC90% para +10/+15/+20 anos."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler — e por que baselines "burros" são obrigatórios cientificamente:</strong>
+      <div class="step"><b>1.</b> Naive: prevê o último valor observado, constante, para sempre. Naive sazonal: repete o mesmo mês do ano anterior. ETS/Holt-Winters e Theta: suavização exponencial, com a componente sazonal desligada (porque $F_s=0{,}25$ está abaixo do limiar de sazonalidade relevante, Lição 0002).</div>
+      <div class="step"><b>2.</b> Por que incluir métodos tão simples: eles servem de "piso" — se um método sofisticado não bate um baseline trivial, isso é um sinal de alerta, não um detalhe menor.</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funcionam: naive, naive sazonal, ETS/Holt-Winters, Theta</summary>
+      <div class="body">
+        <dl>
+          <dt>Naive / naive sazonal</dt>
+          <dd>Repete o último valor observado (naive) ou o valor do mesmo mês do ciclo anterior (naive sazonal) — sem nenhum ajuste.</dd>
+          <dt>ETS / Holt-Winters</dt>
+          <dd>Média ponderada das observações passadas com pesos que decaem exponencialmente; Holt-Winters acrescenta componentes de tendência e sazonalidade suavizadas separadamente.</dd>
+          <dt>Theta</dt>
+          <dd>Decompõe a série em "linhas theta" (curvatura modificada por um parâmetro θ) e combina uma extrapolação linear com uma versão suavizada da série — simples, mas historicamente forte em competições de previsão.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#naive" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>O "piso" de comparação é o que dá credibilidade ao resto da bateria — sem ele, não haveria como saber se um método sofisticado está realmente agregando algo. É também a origem do achado contraintuitivo da próxima seção (naive ganha no <a href="../reference/glossario-estatistico.html#mase" target="_blank" rel="noopener noreferrer">MASE</a> de holdout curto — erro do método ÷ erro do próprio naive).</p>
+    <p class="afeta">Afeta: a legitimidade metodológica de toda a comparação da bateria — é um requisito de rigor citado em qualquer avaliação de prontidão para banca (ver <code>revisao-academica</code>, categoria "ameaças à validade").</p>
+  </aside>
+</div>
+
+<h2>A tabela que resume tudo: 10 métodos, 3 grupos</h2>
+<table class="syn">
+<tr><th>Método</th><th>Tendência (mg/L/ano)</th><th>Previsão +20a</th></tr>
+<tr class="stat"><td>Mann-Kendall/Sen <span class="badge stat">estatístico</span></td><td>3,91</td><td>806,6</td></tr>
+<tr class="stat"><td>Theil-Sen <span class="badge stat">estatístico</span></td><td>3,91</td><td>806,6</td></tr>
+<tr class="stat"><td>OLS <span class="badge stat">estatístico</span></td><td>3,74</td><td>798,2</td></tr>
+<tr class="stat"><td>STL + tendência <span class="badge stat">estatístico</span></td><td>2,92</td><td>773,9</td></tr>
+<tr class="stat"><td>Regressão bayesiana <span class="badge stat">estatístico</span></td><td>3,74</td><td>797,7</td></tr>
+<tr><td>SARIMA <span class="badge adapt">adaptativo</span></td><td>10,43</td><td>922,1</td></tr>
+<tr><td>Prophet <span class="badge adapt">adaptativo</span></td><td>3,81 (histórico) / queda ao extrapolar</td><td>604,8</td></tr>
+<tr class="tree"><td>Random Forest <span class="badge tree">árvore</span></td><td>-0,25</td><td>704,3</td></tr>
+<tr class="tree"><td>XGBoost <span class="badge tree">árvore</span></td><td>-0,91</td><td>649,6</td></tr>
+<tr class="tree"><td>LightGBM <span class="badge tree">árvore</span></td><td>-0,51</td><td>703,5</td></tr>
+</table>
+<p class="source">Fonte: Tabela \ref{tab:sintese} do artigo (resultados.tex, linha 147).</p>
+
+<div class="howto">
+  <strong>O padrão de 3 frases, para recitar de cabeça:</strong>
+  <div class="step"><b>1.</b> Os 5 métodos <span class="fact">estatísticos</span> (ajuste global à série inteira) convergem: 2,9 a 3,9 mg/L/ano, previsão +20a entre 774 e 807 mg/L.</div>
+  <div class="step"><b>2.</b> Os 3 métodos de <span class="interp" style="background:var(--accent-soft)">árvore</span> falham estruturalmente: tendência implícita até negativa, por não extrapolarem além do treino.</div>
+  <div class="step"><b>3.</b> Os 2 métodos <span style="color:var(--ink-soft)">adaptativos</span> (SARIMA, Prophet) divergem em direções opostas: um amplifica, o outro reverte.</div>
+  <div class="step"><b>Conclusão do artigo (não minha):</b> "a evidência mais robusta é a convergência dos métodos estatísticos em torno de 3-4 mg/L/ano — não a previsão pontual de um único modelo para +20 anos."</div>
+</div>
+
+<h2>O achado mais contraintuitivo: o baseline naive ganha de todo mundo</h2>
+<table class="syn">
+<tr><th>Método</th><th>MASE (holdout 24m)</th><th>MASE (CV 5 folds)</th></tr>
+<tr><td><strong>Naive</strong></td><td><strong>0,44</strong></td><td>0,76</td></tr>
+<tr><td>STL + tendência</td><td>0,49</td><td>1,00</td></tr>
+<tr><td>XGBoost</td><td>0,50</td><td>0,80</td></tr>
+<tr><td>SARIMA</td><td>0,50</td><td>1,07</td></tr>
+<tr><td>Regressão bayesiana</td><td>0,52</td><td>0,98</td></tr>
+<tr><td>Mann-Kendall/Sen</td><td>0,53</td><td>1,08</td></tr>
+<tr><td>Naive sazonal</td><td>0,93</td><td>0,87</td></tr>
+</table>
+<p class="source">Fonte: Tabela \ref{tab:mase-completo} do artigo (resultados.tex, linha 184) — MASE: erro absoluto médio, escalado pelo erro de um baseline naive de referência; abaixo de 1,0 = melhor que o naive de referência.</p>
+
+<div class="howto">
+  <strong>A resposta correta de banca para "se o naive ganha, por que vocês usam os outros métodos?":</strong>
+  <div class="step"><b>1.</b> O naive extrapola como reta constante (repete o último valor) — não captura tendência de longo prazo nenhuma.</div>
+  <div class="step"><b>2.</b> Em um horizonte curto (24 meses de holdout), as flutuações de curto prazo da série pesam mais no erro médio do que o ganho de modelar a tendência corretamente — por isso o naive "vence" nesse recorte específico.</div>
+  <div class="step"><b>3.</b> Na CV expansiva (janelas de treino menores, mais instável), o naive já <strong>não</strong> é mais o melhor (MASE 0,76, atrás de XGBoost/LightGBM/RF/Theta) — mostrando que nenhum método único domina em todos os critérios.</div>
+  <div class="step"><b>4.</b> <span class="interp">MASE de holdout curto mede acurácia de curto prazo, não capacidade de captar a direção de longo prazo — que é o objetivo real do projeto (detectar e caracterizar a tendência, não fazer previsão operacional de 2 anos).</span> É por isso que a decisão de finalistas (Lição 0006) pesa MASE, captação de tendência E comportamento do IC — não um único número.</div>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que o naive tem o menor MASE no holdout, apesar de não captar nenhuma tendência?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque o cálculo de MASE penaliza modelos com tendência detectada.</button>
+    <button class="opt" data-correct="true">Porque num horizonte curto as flutuações pesam mais que a tendência.</button>
+    <button class="opt" data-correct="false">Porque o naive foi treinado com mais dados que os demais métodos.</button>
+    <button class="opt" data-correct="false">Porque os outros métodos usaram um holdout diferente do naive.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: os 3 grupos de comportamento e um método de cada.</summary>
+  <div class="answer">
+    <strong>Estatístico (convergem, 2,9-3,9 mg/L/ano):</strong> ex. Mann-Kendall/Sen, OLS, regressão bayesiana.<br>
+    <strong>Árvore (falham estruturalmente, tendência até negativa):</strong> Random Forest, XGBoost, LightGBM.<br>
+    <strong>Adaptativo (divergem em direções opostas):</strong> SARIMA (amplifica, 10,43) e Prophet (reverte na extrapolação).<br>
+    <span class="interp">+ o baseline naive vence todos em MASE de holdout curto, mas por não captar nenhuma tendência — uma lição sobre a diferença entre "menor erro de curto prazo" e "captar a direção certa de longo prazo".</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode explicar por que SARIMA e Prophet reagem de formas opostas apesar de ambos terem componente de tendência "local", detalhar como a regressão quantílica gera o IC90% do XGBoost/LightGBM, ou simular a pergunta "por que incluir métodos que claramente não funcionam, como as árvores?".
+</div>
+
+<nav class="lesson-nav">
+  <a href="0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">← 0004 — WRTDS e balanço de massa</a>
+  <a href="0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">Próxima: 0006 — Métodos adicionais e os 3 finalistas →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

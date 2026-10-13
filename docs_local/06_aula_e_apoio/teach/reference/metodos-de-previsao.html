@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referência — Métodos de previsão</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .paper { border: 1px solid var(--rule); border-radius: 8px; padding: 0.9rem 1.1rem; margin: 1rem 0; scroll-margin-top: 1.5rem; }
+  .paper h3 { margin-top: 0; color: var(--ink); font-size: 1rem; }
+  .fam { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 0.1em 0.6em; display: inline-block; margin-bottom: 0.5rem; }
+  .paper dt { font-weight: 600; margin-top: 0.5rem; font-size: 0.82rem; color: var(--accent); }
+  .paper dd { margin: 0.15rem 0 0; font-size: 0.92rem; }
+  .paper:target { border-color: var(--accent); background: color-mix(in srgb, var(--bg) 92%, var(--accent) 8%); }
+</style>
+</head>
+<body>
+
+<div class="kicker">Referência · Defesa do TCC — TDS/LAGWRP</div>
+<h1>Métodos de previsão — como cada um funciona</h1>
+<p class="lead">28 métodos (cobrindo a bateria completa: os 21 originais, WRTDS/balanço de massa/cenários, e os 5 "avançados" de baixa prioridade). Cada card foca no <strong>mecanismo</strong> — o que a lição ao redor já não repete — não nos números/achados, que estão na lição correspondente. Pensado pra responder "como esse método funciona por dentro?" sem travar na banca.</p>
+
+<h2>Clássicos de tendência (ajuste global à série inteira)</h2>
+
+<div class="paper" id="mann-kendall-sen">
+  <h3>Mann-Kendall + Sen's slope</h3>
+  <span class="fam">Estatística não-paramétrica</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Mann-Kendall testa se existe tendência monotônica comparando o sinal da diferença entre <strong>todos os pares</strong> de observações (não assume distribuição nem relação linear) — conta quantos pares "sobem" vs. "descem". Sen's slope estima a inclinação como a <strong>mediana</strong> de todas as inclinações par-a-par (y_j−y_i)/(t_j−t_i), por isso é robusto a outliers.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>É o teste padrão de tendência em séries ambientais/hidrológicas na literatura — ponto de partida metodológico do projeto, não pressupõe normalidade.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>.</p>
+</div>
+
+<div class="paper" id="theil-sen">
+  <h3>Theil-Sen</h3>
+  <span class="fam">Estatística não-paramétrica</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Mesmo estimador que Sen's slope (mediana das inclinações par-a-par) — os dois nomes descrevem o mesmo método, desenvolvido por caminhos históricos diferentes (Theil 1950, estendido por Sen 1968). No projeto, calculado por um caminho de código diferente do Mann-Kendall/Sen — por isso os números saem idênticos byte a byte.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Confirma o resultado do Mann-Kendall/Sen por uma implementação independente (<code>scipy.stats.theilslopes</code>).</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>.</p>
+</div>
+
+<div class="paper" id="ols">
+  <h3>OLS (mínimos quadrados ordinários)</h3>
+  <span class="fam">Estatística paramétrica</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Ajusta a reta que minimiza a soma dos erros ao quadrado entre a reta e os pontos observados — a regressão linear "clássica". Diferente de Sen/Theil-Sen, assume que os erros são aproximadamente normais pra que o IC e o p-valor sejam válidos, e é sensível a outliers (um ponto extremo puxa a reta mais do que deveria).</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>É o benchmark linear "de sala de aula" — comparar contra ele mostra se os métodos robustos (Sen/Theil-Sen) chegam a uma conclusão diferente.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>.</p>
+</div>
+
+<div class="paper" id="stl">
+  <h3>STL + tendência</h3>
+  <span class="fam">Decomposição de série temporal</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd><em>Seasonal-Trend decomposition using Loess</em> — separa a série em tendência (suavização local iterativa, não uma reta) + sazonalidade + resíduo. A tendência extraída dessa decomposição é então ajustada por uma reta linear simples para gerar a previsão.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>A componente de tendência isolada por STL serve de diagnóstico visual (sobe-desce-sobe revela o padrão cíclico) além de insumo pra previsão.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>, <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<h2>Baselines obrigatórios (o "piso" de comparação)</h2>
+
+<div class="paper" id="naive">
+  <h3>Naive</h3>
+  <span class="fam">Baseline</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Prevê o último valor observado, repetido constante pra todos os horizontes futuros. Nenhum ajuste, nenhum parâmetro.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>É o "piso" mínimo — se um método sofisticado não bate o naive, isso é sinal de alerta, não detalhe menor. A base do MASE (erro do método ÷ erro do naive).</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<div class="paper" id="naive-sazonal">
+  <h3>Naive sazonal</h3>
+  <span class="fam">Baseline</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Repete o valor do mesmo mês do último ciclo sazonal observado (ex. previsão de março = TDS de março do ano anterior), em vez do último valor absoluto.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Piso de comparação específico pra sazonalidade — útil quando $F_s$ (força de sazonalidade) é relevante.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<div class="paper" id="ets">
+  <h3>ETS / Holt-Winters</h3>
+  <span class="fam">Baseline — suavização exponencial</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Média ponderada das observações passadas, com pesos que decaem exponencialmente quanto mais antiga a observação. Holt-Winters acrescenta duas componentes suavizadas separadamente: tendência (nível de crescimento) e sazonalidade — cada uma com seu próprio parâmetro de suavização (α, β, γ).</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Baseline clássico de séries temporais, mais sofisticado que naive mas ainda simples — componente sazonal desligada aqui, já que $F_s=0{,}25$ está abaixo do limiar relevante.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<div class="paper" id="theta">
+  <h3>Theta</h3>
+  <span class="fam">Baseline</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Decompõe a série em "linhas theta" — versões da série com a curvatura modificada por um parâmetro θ — combina uma extrapolação linear simples com uma versão suavizada (SES) da série. Historicamente forte em competições de previsão (M3) apesar de simples.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Baseline adicional de referência na literatura de previsão, barato computacionalmente.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<h2>Séries temporais estatísticas</h2>
+
+<div class="paper" id="sarima">
+  <h3>SARIMA</h3>
+  <span class="fam">Séries temporais estatísticas</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd><em>Seasonal ARIMA</em> combina três ingredientes: AR (regride o valor atual nos valores passados da própria série), I (diferenciação, pra tornar a série estacionária), MA (regride no erro de previsão dos passos anteriores) — com versões sazonais de cada um (P, D, Q no período sazonal). A ordem (p,d,q)(P,D,Q) é escolhida pelo menor AIC (<em>Akaike Information Criterion</em>, critério que equilibra qualidade de ajuste e simplicidade do modelo) numa grade de combinações.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Método de série temporal estatística consolidado; aqui a tendência de longo prazo emerge indiretamente da diferenciação sazonal dupla, não de uma reta ajustada — mecanismo bem diferente dos métodos de tendência global.</dd>
+  </dl>
+  <p class="source">Lições: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</p>
+</div>
+
+<div class="paper" id="sarimax">
+  <h3>SARIMAX multivariado (com Cloreto)</h3>
+  <span class="fam">Séries temporais estatísticas</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Mesmo SARIMA, mas com uma variável exógena (Cloreto, medido na mesma amostra) entrando como regressor adicional que afeta a média prevista — testa se conhecer o Cloreto no mesmo mês ajuda a prever o TDS além do que a própria história do TDS já captura.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Testa multicolinearidade/redundância entre dois parâmetros químicos medidos na mesma amostra — resultado: coeficiente significativo estatisticamente, mas sem ganho prático de previsão.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>.</p>
+</div>
+
+<div class="paper" id="prophet">
+  <h3>Prophet</h3>
+  <span class="fam">Séries temporais estatísticas</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Modelo aditivo decomponível (tendência + sazonalidade + feriados/eventos), desenvolvido pela Meta — a tendência é linear por partes, com <em>changepoints</em> (pontos de mudança de inclinação) detectados automaticamente. Ajustado via inferência bayesiana (Stan) por baixo dos panos.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Alternativa de tendência "adaptativa" ao SARIMA — mas por detectar um changepoint recente perto do fim da série, extrapola a desaceleração local, não a tendência de 15 anos — achado metodológico, não erro.</dd>
+  </dl>
+  <p class="source">Lições: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>.</p>
+</div>
+
+<div class="paper" id="hibrido">
+  <h3>Híbrido SARIMA+Prophet</h3>
+  <span class="fam">Ensemble</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Média simples das previsões pontuais do SARIMA e do Prophet; o IC90% é a envoltória (mínimo e máximo) dos dois ICs individuais, não um IC estatístico recalculado do zero.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Os dois mecanismos de extrapolação são opostos (SARIMA amplifica, Prophet reverte) — a média cancela parcialmente os erros, por isso é um dos 3 finalistas.</dd>
+  </dl>
+  <p class="source">Lições: <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</p>
+</div>
+
+<h2>Aprendizado de máquina</h2>
+
+<div class="paper" id="random-forest">
+  <h3>Random Forest</h3>
+  <span class="fam">ML — árvore (bagging)</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd><em>Bagging</em>: treina muitas árvores de decisão, cada uma num reamostra <em>bootstrap</em> diferente dos dados e um subconjunto aleatório de features, depois faz a média das previsões — reduz variância. Previsão recursiva aqui: o valor previsto de um mês vira o <em>lag</em> (entrada) do mês seguinte.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Representa a família de árvore — mas árvores não extrapolam além do intervalo visto no treino: a previsão "satura" (os 3 horizontes convergem pro mesmo valor), limitação estrutural, não erro.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<div class="paper" id="xgboost">
+  <h3>XGBoost</h3>
+  <span class="fam">ML — árvore (boosting)</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd><em>Gradient boosting</em>: diferente do bagging (árvores independentes em paralelo), treina árvores <strong>sequencialmente</strong>, cada nova árvore ajustando o resíduo (gradiente do erro) deixado pelo conjunto já treinado, com regularização explícita contra overfitting.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>GPU-capaz no projeto; mesma limitação de extrapolação do RF, mas o boosting reage de forma menos estável a features recursivas fora do range de treino (previsão não-monotônica entre horizontes).</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<div class="paper" id="lightgbm">
+  <h3>LightGBM</h3>
+  <span class="fam">ML — árvore (boosting)</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Mesmo princípio de <em>gradient boosting</em> do XGBoost, mas cresce as árvores folha-a-folha (em vez de nível-a-nível) e usa histogramas pra encontrar os melhores cortes mais rápido — otimizado pra velocidade em datasets grandes (vantagem menos relevante aqui, com ~180 pontos).</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Segunda implementação de boosting, pra comparar se a estratégia de crescimento da árvore muda o resultado.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>.</p>
+</div>
+
+<div class="paper" id="detrend-rf">
+  <h3>Detrend + árvore (RF)</h3>
+  <span class="fam">ML — híbrido estatística+árvore</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Separa o problema em duas partes: ajusta uma tendência OLS simples primeiro, depois usa uma árvore (Random Forest) só pra modelar o <strong>resíduo</strong> dessa tendência (não a série inteira). A reta garante crescimento monotônico que extrapola; a árvore só refina o ruído de curto prazo ao redor dela.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Resolve a saturação do RF/XGBoost "puro" — por isso é um dos 3 finalistas (melhor MASE de holdout entre os métodos que captam tendência sem saturar).</dd>
+  </dl>
+  <p class="source">Lições: <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>.</p>
+</div>
+
+<div class="paper" id="svr">
+  <h3>SVR (Support Vector Regression)</h3>
+  <span class="fam">ML — kernel</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Encontra uma função dentro de uma margem de tolerância (ε) dos dados, usando um <em>kernel</em> (aqui RBF — <em>Radial Basis Function</em>, função que mede similaridade entre dois pontos pela distância entre eles) que mapeia os dados pra um espaço de maior dimensão onde relações não-lineares viram lineares — minimiza uma função de perda baseada na margem, não no erro quadrático simples.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Primeiro método de toda a bateria (de 21!) com R² positivo em holdout — mas ainda sofre a mesma limitação de saturação na extrapolação recursiva.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>.</p>
+</div>
+
+<div class="paper" id="gaussian-process">
+  <h3>Gaussian Process (GP)</h3>
+  <span class="fam">ML — kernel bayesiano</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Regressão bayesiana não-paramétrica: modela a função como uma amostra de uma distribuição Gaussiana multivariada definida por um <em>kernel</em> (função de covariância) que descreve o quão correlacionados dois pontos são, em função da distância entre eles — dá uma posterior completa (incerteza nativa), mas tende a reverter à média longe dos dados de treino.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Pior desempenho de toda a bateria aqui — o kernel RBF convergiu pra um <em>length-scale</em> curto, revertendo rápido à média fora do treino (limitação conhecida de GP em séries com ruído alto relativo ao sinal).</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>.</p>
+</div>
+
+<div class="paper" id="regressao-bayesiana">
+  <h3>Regressão bayesiana</h3>
+  <span class="fam">ML/estatística — incerteza nativa</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>O mesmo modelo linear da OLS (intercepto + inclinação), mas ajustado por inferência bayesiana (priors + verossimilhança → posterior) via amostragem MCMC (<em>Markov Chain Monte Carlo</em>; <a href="glossario-estatistico.html#nuts" target="_blank" rel="noopener noreferrer">PyMC/NUTS</a>) em vez de mínimos quadrados — produz uma distribuição posterior completa dos parâmetros, não um único valor, então a previsão incorpora a incerteza do parâmetro <strong>e</strong> do resíduo juntas.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Único método com incerteza genuinamente honesta e crescente por construção — um dos 3 finalistas, e o mais calibrado via CV expansiva na bateria de robustez (<a class="dcode" href="decisoes-citadas.html#D-64" target="_blank" rel="noopener noreferrer">D-64</a>).</dd>
+  </dl>
+  <p class="source">Lições: <a href="../lessons/0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">0005</a>, <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>, <a href="../lessons/0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">0007</a>. Glossário: <a href="glossario-estatistico.html" target="_blank" rel="noopener noreferrer">NUTS/posterior</a>.</p>
+</div>
+
+<div class="paper" id="lstm">
+  <h3>LSTM</h3>
+  <span class="fam">ML — rede neural recorrente</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd><em>Long Short-Term Memory</em> — arquitetura de rede neural recorrente com células de memória controladas por "portões" (gates) que aprendem o que lembrar/esquecer ao longo da sequência, capaz de capturar dependências temporais de longo alcance. Aqui, uma rede leve de 1 camada (32 unidades, PyTorch).</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Testa se deep learning ajuda numa série ambiental mensal curta (~180 pontos) — não vence o naive, confirmando a expectativa da literatura pra esse tamanho de amostra.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">0006</a>.</p>
+</div>
+
+<h2>Estruturais / causais</h2>
+
+<div class="paper" id="wrtds">
+  <h3>WRTDS (flow-normalization)</h3>
+  <span class="fam">Estrutural — hidrologia</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd><em>Weighted Regression on Time, Discharge, and Season</em> (Hirsch et al.) — regressão ponderada localmente de log(TDS) sobre tempo, log(vazão) e sazonalidade (kernel tricúbico). A "flow-normalização" recalcula a previsão mantendo a vazão fixa na média histórica em cada instante — isola quanto da tendência é só efeito de vazão variando.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Primeira das duas provas quantitativas do mecanismo de diluição — a tendência flow-normalized deixa de ser significativa, mostrando que quase toda a tendência bruta é efeito de vazão.</dd>
+  </dl>
+  <p class="source">Lições: <a href="../lessons/0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">0003</a>, <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>. Glossário: <a href="glossario-estatistico.html" target="_blank" rel="noopener noreferrer">WRTDS</a>.</p>
+</div>
+
+<div class="paper" id="balanco-massa">
+  <h3>Balanço de massa</h3>
+  <span class="fam">Estrutural — identidade física</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Não é um modelo estatístico ajustado à série de TDS — é uma identidade física direta: <code>TDS = carga(lb/dia) ÷ (vazão(MGD) × 8,34)</code>. Decompõe a tendência nos dois componentes físicos (quanto sal entra, quanto de água dilui) medidos separadamente, em vez de inferir o mecanismo indiretamente.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Segunda prova do mecanismo de diluição, por um caminho matemático totalmente diferente do WRTDS (contábil, não estatístico) — as duas convergem na mesma conclusão.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">0004</a>.</p>
+</div>
+
+<div class="paper" id="cenarios">
+  <h3>Cenários climáticos (Monte Carlo sobre PDSI)</h3>
+  <span class="fam">Estrutural — simulação</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Ajusta um processo AR(1) (média-reversível) ao PDSI histórico completo, simula 2.000 trajetórias futuras de PDSI por cenário (mudando só a média-alvo: seco/normal/úmido/agravamento), e passa cada trajetória simulada pela regressão TDS~PDSI já estimada — gera uma distribuição inteira de futuros, não um único número.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Substitui a extrapolação linear do balanço de massa (que cruzava vazão fisicamente impossível) por uma faixa condicionada a clima, sempre fisicamente plausível.</dd>
+  </dl>
+  <p class="source">Lições: <a href="../lessons/0008-objetivos-secundarios.html" target="_blank" rel="noopener noreferrer">0008</a>, <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a> (variante Cal-Adapt RCP 8.5).</p>
+</div>
+
+<h2>Avançados / exploratórios (baixa prioridade)</h2>
+
+<div class="paper" id="espaco-estados">
+  <h3>Espaço de estados / DLM</h3>
+  <span class="fam">Avançado — filtro de Kalman</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd><em>Dynamic Linear Model</em> (<code>statsmodels.UnobservedComponents</code>) — trata tendência e sazonalidade como "estados" não-observados que evoluem no tempo, estimados via filtro de Kalman. A especificação <em>local linear trend</em> permite (mas não força) que a inclinação mude mês a mês.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Testa diretamente se há tendência genuinamente variável — a variância do estado de tendência ficou ~0, confirmando o WRTDS por um caminho independente.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="gam">
+  <h3>GAM (Generalized Additive Model)</h3>
+  <span class="fam">Avançado — regressão não-linear suave</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Estende a regressão linear trocando termos lineares por funções suaves e flexíveis (aqui, P-splines) para cada preditor (tempo, mês) — ajustado minimizando um critério penalizado (GCV — <em>Generalized Cross-Validation</em>) que controla o quanto a curva pode "ondular". Sem restrição, a curva de tendência pode extrapolar de forma explosiva fora do intervalo observado.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Testa uma forma funcional mais flexível que uma reta — exigiu um piso declarado no parâmetro de suavização pra evitar a extrapolação explosiva (patologia conhecida de P-splines).</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="regressao-quantilica">
+  <h3>Regressão quantílica</h3>
+  <span class="fam">Avançado — quantis condicionais</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Em vez de modelar a média condicional (como OLS), modela diretamente um quantil específico (ex. o percentil 90) minimizando uma função de perda assimétrica (<em>pinball loss</em>) — cada quantil (Q10/Q50/Q90) é ajustado de forma independente, sem garantia estrutural de que Q10≤Q50≤Q90 na extrapolação.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Testa se os picos de TDS (relevantes pra limites regulatórios) sobem mais rápido que a mediana — resultado na direção oposta à hipótese: os picos caem.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="intervencao-arimax">
+  <h3>Intervenção / ARIMAX com eventos</h3>
+  <span class="fam">Avançado — análise de intervenção</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>SARIMA estendido com regressores exógenos representando eventos específicos conhecidos — um pulso para o período de seca (2012-2016) e um degrau permanente para a ordem de conservação de água (2015) — testa se cada evento, isoladamente, explica um salto de nível na série, controlando pelo outro.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Nenhum dos dois eventos atinge significância isolada clara — consistente com a leitura de regime/ciclo contínuo, não de um choque único e pontual.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<div class="paper" id="modelo-fundacional">
+  <h3>Modelo fundacional zero-shot (Chronos-Bolt)</h3>
+  <span class="fam">Avançado — modelo pré-treinado</span>
+  <dl>
+    <dt>Como funciona</dt>
+    <dd>Modelo de série temporal pré-treinado (Amazon, baseado em transformer) aplicado <em>zero-shot</em> — sem nenhum treino nos dados deste projeto, só recebe a série histórica como "prompt" e produz previsões de quantis diretamente, sem ajuste de parâmetros específico.</dd>
+    <dt>Por que está na bateria</dt>
+    <dd>Testa se conhecimento genérico de um modelo pré-treinado em milhares de séries compensa a falta de dados específicos do domínio — expectativa declarada antes de rodar (não deveria superar os métodos clássicos com só ~180 pontos) foi confirmada.</dd>
+  </dl>
+  <p class="source">Lição: <a href="../lessons/0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">0009</a>.</p>
+</div>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) sobre o mecanismo de qualquer método acima em mais profundidade, ou peça pra simular uma pergunta de banca específica sobre ele.
+</div>
+
+<nav class="lesson-nav">
+  <a href="glossario-estatistico.html" target="_blank" rel="noopener noreferrer">← Glossário estatístico</a>
+  <a href="decisoes-citadas.html" target="_blank" rel="noopener noreferrer">Decisões citadas →</a>
+</nav>
+
+</body>
+</html>

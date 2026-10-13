@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0006 — Métodos adicionais e os 3 finalistas</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.4rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0 1.4rem; font-size: 0.92rem;
+  }
+  .howto .step { margin: 0.35rem 0; }
+  .howto .step b { color: var(--accent); }
+  table.diag { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+  table.diag th, table.diag td { border-bottom: 1px solid var(--rule); padding: 0.32rem 0.5rem; text-align: left; }
+  .correction {
+    border: 2px solid var(--accent); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.5rem 0;
+    background: var(--accent-soft);
+  }
+  .correction .tag {
+    font-family: "Helvetica Neue", Arial, sans-serif; text-transform: uppercase; font-size: 0.7rem;
+    letter-spacing: 0.06em; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem; display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0006 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>Os 5 métodos restantes, o diagnóstico de resíduos, e por que esses 3 finalistas</h1>
+<p class="lead">Objetivo desta lição: fechar a bateria completa (21 métodos) e entender exatamente por que regressão bayesiana, Detrend+RF e híbrido SARIMA+Prophet foram escolhidos — inclusive a correção mais recente sobre o Detrend+RF, que muda a <em>justificativa</em> da escolha, não a escolha em si.</p>
+<p class="source">Pré-requisito: <a href="0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">Lição 0005 — A bateria de 10 métodos e os baselines</a>. Fonte primária: <a href="../ROTEIRO_AULA_TDS_LAGWRP.md" target="_blank" rel="noopener noreferrer">ROTEIRO_AULA_TDS_LAGWRP.md</a>, Seção B (final); issues #1/#9-#15 desta sessão (bateria de robustez).</p>
+
+<h2>Os 5 métodos adicionais</h2>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/svr-gp-tds.png" alt="Previsão de TDS por SVR e Gaussian Process">
+      <figcaption>Figura do artigo (resultados.tex, linha 213): "SVR e Gaussian Process (kernel composto) — previsão de TDS com IC90%."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step"><b>SVR:</b> primeiro método de toda a bateria (de 21!) com <a href="../reference/glossario-estatistico.html#r2" target="_blank" rel="noopener noreferrer">R²</a> positivo em holdout (0,04) e 2º melhor RMSE (38,9). Mesma limitação de árvore/SVR na extrapolação recursiva — a "tendência implícita" negativa não é uma reversão real, é a mesma saturação já vista no RF/XGBoost.</div>
+      <div class="step"><b>Gaussian Process:</b> <span class="fact">pior desempenho de toda a bateria</span> (RMSE=146,5, R²=-12,65 — bem mais negativo que o -0,66 da Lição <a href="0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">0002</a>, erra muito mais que só prever a média). O ajuste do kernel RBF (<em>Radial Basis Function</em>, função que mede similaridade entre dois pontos pela distância entre eles) convergiu para um <em>length-scale</em> curto, fazendo o GP reverter rápido à média fora do treino — limitação conhecida de GP em séries com ruído alto relativo ao sinal, testado com mais <em>restarts</em> do otimizador e ainda assim reportado como obtido, sem forçar um resultado melhor.</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funcionam: SVR e Gaussian Process</summary>
+      <div class="body">
+        <dl>
+          <dt>SVR (Support Vector Regression)</dt>
+          <dd>Encontra uma função dentro de uma margem de tolerância (ε) dos dados, usando um <em>kernel</em> (aqui RBF) que mapeia os dados pra um espaço de maior dimensão onde relações não-lineares viram lineares.</dd>
+          <dt>Gaussian Process</dt>
+          <dd>Regressão bayesiana não-paramétrica: modela a função como amostra de uma distribuição Gaussiana definida por um <em>kernel</em> de covariância (o quão correlacionados dois pontos são, pela distância) — dá uma posterior completa, mas tende a reverter à média longe do treino.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#svr" target="_blank" rel="noopener noreferrer">SVR</a>, <a href="../reference/metodos-de-previsao.html#gaussian-process" target="_blank" rel="noopener noreferrer">Gaussian Process</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Nenhum dos dois vira finalista, mas por motivos diferentes: SVR tem a mesma limitação estrutural de extrapolação das árvores (Lição 0005); o GP é simplesmente o pior resultado da bateria, reportado por completude e honestidade, não escondido.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> — amplia o conjunto de candidatos descartados antes da escolha final, reforçando que a seleção dos 3 finalistas comparou a bateria inteira, não só os óbvios.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/detrend-arvore-tds.png" alt="Previsão de TDS por tendência OLS + árvore no resíduo">
+      <figcaption>Figura do artigo (resultados.tex, linha 220): "Tendência OLS + árvore (RF/XGBoost) no resíduo — previsão de TDS."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step"><b>A ideia central:</b> separa o problema em duas partes — ajusta uma tendência OLS simples primeiro, depois usa uma árvore (RF ou XGBoost) só para modelar o <em>resíduo</em> dessa tendência, não a série inteira. Isso resolve a saturação do RF/XGBoost "puro" (Lição 0005): a tendência linear garante crescimento monotônico, a árvore só refina o ruído de curto prazo em torno dela.</div>
+      <div class="step"><b>Resultado:</b> Detrend+RF cresce monotonicamente (743,5 → 762,2 → 780,9 mg/L em +10/+15/+20a) — ao contrário da saturação do RF puro. MASE de holdout (0,44) é o 2º melhor de toda a bateria, praticamente empatado com o naive (0,436, Lição 0005).</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: Detrend + árvore</summary>
+      <div class="body">
+        <dl>
+          <dt>Detrend + árvore (RF)</dt>
+          <dd>Separa o problema em duas partes: ajusta uma tendência OLS simples primeiro, depois usa uma árvore só pra modelar o <strong>resíduo</strong> dessa tendência. A reta garante crescimento monotônico que extrapola; a árvore só refina o ruído de curto prazo ao redor dela.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#detrend-rf" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Este é o gráfico que mais importa da lição: a figura que mostra por que o Detrend+RF resolve o problema estrutural das árvores puras e se torna o finalista de árvore/ML — mas sua justificativa completa (resíduo "limpo") foi corrigida mais adiante nesta mesma lição.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> — escolha direta de <code>detrend_rf</code> como finalista. Ver a caixa de correção abaixo para a parte da justificativa que mudou em 2026-10-12.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/sarimax-cloreto-tds.png" alt="SARIMAX com Cloreto como regressor exógeno">
+      <figcaption>Figura do artigo (resultados.tex, linha 253): "SARIMAX(TDS, exog=Cloreto) — Cloreto observado (painel superior) e previsão de TDS (painel inferior)."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step"><b>Painel superior:</b> a série de Cloreto observada, usada como variável exógena. <b>Painel inferior:</b> a previsão de TDS resultante.</div>
+      <div class="step"><b>Achado:</b> o coeficiente do Cloreto é significativo (β=1,13, p&lt;0,001) — mas isso <strong>não melhora a previsão na prática</strong>: RMSE praticamente igual ao SARIMA univariado (48,4 → 49,7). O Cloreto parece redundante com o que a diferenciação sazonal do SARIMA já captura para previsão de curto prazo, mesmo sendo relevante na relação estatística contemporânea entre as duas séries (esta é a resposta 4 da Lição 0001).</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: SARIMAX multivariado</summary>
+      <div class="body">
+        <dl>
+          <dt>SARIMAX com Cloreto</dt>
+          <dd>Mesmo SARIMA, mas com o Cloreto (medido na mesma amostra) entrando como regressor exógeno adicional que afeta a média prevista — testa se conhecer o Cloreto no mesmo mês ajuda a prever o TDS além do que a própria história do TDS já captura.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#sarimax" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É um padrão que se repete no projeto (visto de novo com o PDSI como covariável, Lição 0008): uma variável relevante na relação estatística contemporânea nem sempre melhora a previsão fora da amostra — "relevante" e "útil para prever" são perguntas diferentes.</p>
+    <p class="afeta">Afeta: nenhuma decisão de finalista diretamente — é um resultado negativo registrado por completude metodológica, consistente com a disciplina de reportar achados negativos do projeto.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/hibrido-arima-prophet-tds.png" alt="Híbrido SARIMA+Prophet, média das previsões pontuais">
+      <figcaption>Figura do artigo (resultados.tex, linha 260): "Híbrido SARIMA+Prophet (média das previsões pontuais, IC90% pela envoltória) — previsão de TDS."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step"><b>Mecanismo:</b> média simples das previsões pontuais do SARIMA e do Prophet; o IC90% é a envoltória (máximo e mínimo) dos dois ICs individuais, não um IC estatístico recalculado.</div>
+      <div class="step"><b>Achado interessante:</b> o RMSE de holdout do híbrido (46,4) é <strong>melhor</strong> que os dois componentes isolados (SARIMA 48,4, Prophet 49,0) — indício de que a média cancela parcialmente os erros, já que os dois mecanismos de extrapolação são opostos (SARIMA amplifica, Prophet reverte, Lição 0005). Mas o MASE de CV (1,05) fica pior que ambos isolados nessa métrica — o ganho do ensemble não é uniforme entre critérios, outra razão para nunca decidir por um único número.</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: híbrido SARIMA+Prophet</summary>
+      <div class="body">
+        <dl>
+          <dt>Híbrido SARIMA+Prophet</dt>
+          <dd>Média simples das previsões pontuais dos dois modelos; o IC90% é a envoltória (mínimo e máximo) dos dois ICs individuais, não um IC estatístico recalculado do zero.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#hibrido" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É o terceiro e último finalista: o melhor <a href="../reference/glossario-estatistico.html#rmse" target="_blank" rel="noopener noreferrer">RMSE</a> de holdout entre os métodos de série temporal, com IC mais largo representando o cenário mais cauteloso — completando o trio que captura 3 mecanismos de extrapolação diferentes.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> — escolha direta de <code>hibrido_arima_prophet</code> como finalista ("melhor RMSE no holdout entre os métodos de série temporal").</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/lstm-tds.png" alt="Previsão recursiva de TDS por LSTM leve">
+      <figcaption>Figura do artigo (resultados.tex, linha 269): "LSTM leve (PyTorch, 1 camada, 32 unidades) — previsão recursiva de TDS com IC90% por bootstrap de resíduos."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step"><b>Resultado:</b> o LSTM <strong>não vence</strong> o baseline naive (MASE 0,69 vs. 0,44) nem os métodos clássicos — confirma, para este dataset, que em séries ambientais mensais curtas (~180 pontos) uma rede neural recorrente leve não supera métodos estatísticos/de árvore mais simples. Previsão também não-monotônica (786,5 → 720,5 → 795,4 mg/L), padrão parecido com o do XGBoost original.</div>
+      <div class="step"><b>Decisão consequente:</b> o LSTM <strong>não entra como finalista</strong> — reportado como método testado e não vencedor, não omitido do artigo.</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: LSTM</summary>
+      <div class="body">
+        <dl>
+          <dt>LSTM (Long Short-Term Memory)</dt>
+          <dd>Arquitetura de rede neural recorrente com células de memória controladas por "portões" (gates) que aprendem o que lembrar/esquecer ao longo da sequência — captura dependências temporais de longo alcance. Aqui, rede leve de 1 camada (32 unidades, PyTorch).</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#lstm" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Reforça um ponto de rigor que vale a pena ter pronto pra banca: "deep learning" não é automaticamente melhor em dado tabular pequeno — o projeto testou e reportou o resultado negativo em vez de omitir o método.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> — descarte do LSTM como finalista, por não superar nem o baseline naive.</p>
+  </aside>
+</div>
+
+<table class="diag">
+<tr><th>Método</th><th>Tendência (mg/L/ano)</th><th>RMSE holdout</th><th>MASE holdout</th></tr>
+<tr><td>SVR</td><td>-1,74*</td><td>38,9</td><td>0,49</td></tr>
+<tr><td>Gaussian Process</td><td>3,74</td><td>146,5</td><td>2,03</td></tr>
+<tr><td><strong>Detrend + RF</strong></td><td>3,74</td><td>49,8</td><td>0,44</td></tr>
+<tr><td>Detrend + XGBoost</td><td>3,74</td><td>51,5</td><td>0,46</td></tr>
+<tr><td>SARIMAX + Cloreto</td><td>8,11</td><td>49,7</td><td>0,50</td></tr>
+<tr><td><strong>Híbrido SARIMA+Prophet</strong></td><td>3,76</td><td>46,4</td><td>0,49</td></tr>
+<tr><td>LSTM</td><td>6,84</td><td>71,5</td><td>0,69</td></tr>
+</table>
+<p class="source">Fonte: Tabela \ref{tab:metodos-adicionais} do artigo (resultados.tex, linha 228). *SVR: tendência negativa é artefato de não-extrapolação, não reversão real.</p>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que o SARIMAX com Cloreto não melhora a previsão apesar do coeficiente ser significativo?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque o Cloreto não tem relação estatística real alguma com TDS.</button>
+    <button class="opt" data-correct="true">Porque o SARIMA já captura essa informação via diferenciação sazonal.</button>
+    <button class="opt" data-correct="false">Porque a série de Cloreto tem muitos valores ausentes no período.</button>
+    <button class="opt" data-correct="false">Porque o SARIMAX precisa de mais de 180 meses para convergir bem.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>Diagnóstico de resíduos: por que só 5 candidatos chegam até aqui</h2>
+<p>Cinco candidatos — escolhidos por equilibrarem MASE baixo e captação real de tendência sem saturar/oscilar — tiveram seus resíduos (ajustados na série <strong>completa</strong>, "in-sample") testados para autocorrelação, normalidade e heterocedasticidade.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/diagnostico-residuos-finalistas.png" alt="Diagnóstico de resíduos dos 5 candidatos: resíduo x tempo, histograma e QQ-plot">
+      <figcaption>Figura do artigo (resultados.tex, linha 314): "Diagnóstico de resíduos dos 5 candidatos mais fortes: resíduo x tempo, histograma e QQ-plot."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler — 5 linhas de 3 painéis cada:</strong>
+      <div class="step"><b>Coluna 1 (resíduo × tempo):</b> o ideal é uma nuvem de pontos sem padrão visível ao redor de zero. Um padrão em onda/tendência indica autocorrelação (o que o Ljung-Box testa formalmente).</div>
+      <div class="step"><b>Coluna 2 (histograma):</b> o ideal é um formato de sino simétrico — é o que o Shapiro-Wilk testa.</div>
+      <div class="step"><b>Coluna 3 (QQ-plot — <em>Quantile-Quantile plot</em>, gráfico quantil-quantil):</b> compara os quantis do resíduo com os de uma normal teórica — pontos colados na diagonal = resíduo bem aproximado por normal; caudas que se afastam da diagonal nas pontas = caudas mais pesadas (comum em árvores).</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É o diagnóstico <em>in-sample</em> que originalmente motivou escolher o Detrend+RF — mas atenção: é só metade da história. A caixa de correção logo abaixo mostra o mesmo teste no holdout, com resultado bem diferente.</p>
+    <p class="afeta">Afeta: a justificativa (não a escolha) de <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> para <code>detrend_rf</code> — e é o gatilho direto da bateria de robustez (issue #1/#9-#15, Lição 0007).</p>
+  </aside>
+</div>
+
+<table class="diag">
+<tr><th>Método</th><th>Ljung-Box (autocorr.)</th><th>Shapiro-Wilk (normal.)</th><th>ARCH (heterocedast.)</th></tr>
+<tr><td>OLS</td><td>rejeitado (p&lt;0,0001)</td><td>não rejeitado (p=0,15)</td><td>rejeitado (p&lt;0,0001)</td></tr>
+<tr><td>Regressão bayesiana*</td><td>rejeitado (p&lt;0,0001)</td><td>não rejeitado (p=0,15)</td><td>rejeitado (p&lt;0,0001)</td></tr>
+<tr><td><strong>Detrend + RF</strong></td><td><strong>não rejeitado (p=0,24)</strong></td><td>rejeitado (p=0,003)</td><td><strong>não rejeitado (p=0,76)</strong></td></tr>
+<tr><td>SARIMA</td><td>rejeitado (p=0,0001)</td><td>rejeitado (p&lt;0,0001)</td><td>rejeitado (p&lt;0,0001)</td></tr>
+<tr><td>Híbrido SARIMA+Prophet</td><td>rejeitado (p=0,0003)</td><td>rejeitado (p&lt;0,0001)</td><td>rejeitado (p&lt;0,0001)</td></tr>
+</table>
+<p class="source">Fonte: Tabela \ref{tab:diagnostico-residuos} do artigo (resultados.tex, linha 324). "Não rejeitado" = resultado desejável (não encontrou o problema). *Resíduos da regressão bayesiana tratados como equivalentes aos da OLS, mesmo modelo linear-gaussiano.</p>
+
+<p>O texto do artigo dizia originalmente: <em>"o Detrend+RF é o único candidato sem autocorrelação residual detectável e sem heterocedasticidade condicional"</em> — só falhando normalidade (caudas pesadas, comum em árvores). Esse diagnóstico é <strong>in-sample</strong> (ajuste na série completa que o próprio modelo viu). Essa frase <strong>já foi corrigida em <code>resultados.tex</code> (linha 336 e 606) e em <code>conclusao.tex</code> em 2026-10-12</strong> — o texto atual do artigo já qualifica a claim como "no resíduo in-sample" e inclui o parágrafo abaixo.</p>
+
+<div class="correction">
+  <span class="tag">Correção aplicada ao artigo — issue #9-#15, script_31</span>
+  <p>O mesmo teste de Ljung-Box, repetido sobre o <strong>resíduo de holdout</strong> (previsão genuína fora da amostra, 24 meses não vistos no treino) para os mesmos 5 candidatos, dá um resultado diferente:</p>
+  <table class="diag" style="margin-top:0.6rem;">
+    <tr><th>Método</th><th>Ljung-Box no holdout</th></tr>
+    <tr><td>OLS / Regressão bayesiana</td><td>rejeitado (p=0,049)</td></tr>
+    <tr><td><strong>Detrend + RF</strong></td><td><strong>rejeitado (p=0,024)</strong></td></tr>
+    <tr><td>SARIMA</td><td>rejeitado (p=0,026)</td></tr>
+    <tr><td>Híbrido SARIMA+Prophet</td><td>rejeitado (p=0,021)</td></tr>
+  </table>
+  <p style="margin-top:0.6rem;"><strong>Fora da amostra, os 5 candidatos falham igualmente no Ljung-Box</strong> — o Detrend+RF não é mais "o único sem autocorrelação detectável". A claim de "resíduo limpo" só se sustentava dentro da série que o próprio modelo já tinha visto (in-sample); em dados genuinamente novos, essa vantagem desaparece.</p>
+  <p><strong>O que NÃO muda:</strong> o teste de Diebold-Mariano (comparação formal de acurácia de previsão, par a par) mostra que o Detrend+RF continua <strong>significativamente melhor</strong> que SARIMA (p=0,044) e híbrido (p=0,041) em acurácia de ponto — mas <strong>não</strong> é significativamente diferente da regressão bayesiana (p=0,387). Ou seja: a vantagem prática do Detrend+RF sobre os métodos de série temporal é real; a vantagem sobre a bayesiana, não está comprovada; e a justificativa correta para mantê-lo como finalista passa a ser essa (MASE + Diebold-Mariano), não mais "resíduo limpo".</p>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">O que a correção desta sessão muda na escolha dos 3 finalistas do artigo?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Troca o Detrend+RF por outro método, pois ele deixou de ser competitivo.</button>
+    <button class="opt" data-correct="true">Muda a justificativa do Detrend+RF, mas não troca nenhum finalista.</button>
+    <button class="opt" data-correct="false">Remove os 3 finalistas e exige recomeçar toda a bateria do zero.</button>
+    <button class="opt" data-correct="false">Adiciona um quarto finalista para compensar a falha encontrada.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>A síntese final: por que esses 3, e não outros</h2>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/sintese-final-finalistas.png" alt="Os 3 finalistas sobrepostos à série histórica, com IC90%">
+      <figcaption>Figura do artigo (resultados.tex, linha 608): "Finalistas recomendados — regressão bayesiana, Detrend+RF e híbrido SARIMA+Prophet — com IC90% para +10/+15/+20 anos."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler — e o critério de escolha de cada um, atualizado:</strong>
+      <div class="step"><b>Regressão bayesiana:</b> única com incerteza "honesta" por construção — IC90 cresce suave e proporcional ao horizonte (Lição 0005); tendência com probabilidade posterior &gt;99%.</div>
+      <div class="step"><b>Detrend+RF:</b> melhor MASE de holdout entre os métodos que captam tendência sem saturar (0,44); vantagem de ponto estatisticamente real sobre SARIMA/híbrido (Diebold-Mariano); <span class="interp">a justificativa de "resíduo limpo" foi corrigida nesta sessão — só valia in-sample.</span></div>
+      <div class="step"><b>Híbrido SARIMA+Prophet:</b> melhor RMSE de holdout entre os métodos de série temporal (46,4); IC90 mais largo, representando o cenário mais cauteloso.</div>
+      <div class="step"><b>A frase de fechamento, para a banca:</b> "os 3 finalistas convergem em ~760-800 mg/L em +20 anos (ou 594-721 mg/L se condicionado a cenários climáticos plausíveis, <a href="0008-objetivos-secundarios.html" target="_blank" rel="noopener noreferrer">Lição 0008</a>) — não porque um modelo venceu os outros 20, mas porque cada um captura um mecanismo de extrapolação diferente e nenhum domina em todos os critérios simultaneamente."</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a figura de síntese do projeto inteiro — a mesma usada na Lição 0001 como "achado central". É provavelmente a primeira imagem que a banca vê, e a que resume o argumento que todas as outras lições sustentam.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-35" target="_blank" rel="noopener noreferrer">D-35</a> por completo (os 3 critérios de escolha juntos) — é o ponto de chegada de toda a bateria de 21+ métodos.</p>
+  </aside>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: o que mudou e o que não mudou na história do Detrend+RF após a bateria de robustez.</summary>
+  <div class="answer">
+    <strong>Mudou:</strong> a claim "único candidato sem autocorrelação residual" só vale in-sample (p=0,24); no holdout, todos os 5 candidatos falham o Ljung-Box, incluindo o Detrend+RF (p=0,024).<br>
+    <strong>Não mudou:</strong> ele continua sendo finalista; continua com o melhor MASE de holdout (0,44) entre os métodos que captam tendência sem saturar; e continua estatisticamente melhor que SARIMA/híbrido em acurácia de ponto (Diebold-Mariano, p≈0,04).<br>
+    <span class="interp">A lição central: a escolha de um finalista pode sobreviver a uma correção de justificativa, desde que a correção seja feita de forma transparente e a decisão seja revalidada com outros critérios — isso é, na prática, ciência honesta, não um erro a esconder.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode detalhar o teste de Diebold-Mariano (com a correção de Harvey-Leybourne-Newbold para amostra pequena), explicar por que resíduo in-sample e holdout podem dar diagnósticos diferentes, ou simular a pergunta de banca "se a justificativa mudou, por que vocês não trocaram de finalista?".
+</div>
+
+<nav class="lesson-nav">
+  <a href="0005-bateria-10-metodos-baselines.html" target="_blank" rel="noopener noreferrer">← 0005 — A bateria de 10 métodos e os baselines</a>
+  <a href="0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">Próxima: 0007 — A bateria de validação/robustez desta sessão →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

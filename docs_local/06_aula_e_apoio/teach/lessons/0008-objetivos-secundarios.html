@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0008 — Objetivos secundários: correlação e cenários climáticos</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.4rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0 1.4rem; font-size: 0.92rem;
+  }
+  .howto .step { margin: 0.35rem 0; }
+  .howto .step b { color: var(--accent); }
+  table.cen { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+  table.cen th, table.cen td { border-bottom: 1px solid var(--rule); padding: 0.32rem 0.5rem; text-align: left; }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0008 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>As duas perguntas secundárias: TDS prevê problema biológico? E qual número levar pra 2046?</h1>
+<p class="lead">Objetivo desta lição: responder a pergunta 3 do mapa geral (Lição 0001) com o gráfico certo, e fechar em definitivo a pergunta "então qual é o número de previsão de longo prazo?" — a resposta que substitui a extrapolação linear implausível da Lição 0004.</p>
+<p class="source">Pré-requisito: <a href="0004-wrtds-balanco-massa.html" target="_blank" rel="noopener noreferrer">Lição 0004 — WRTDS e balanço de massa</a>. Fonte primária: <a href="../ROTEIRO_AULA_TDS_LAGWRP.md" target="_blank" rel="noopener noreferrer">ROTEIRO_AULA_TDS_LAGWRP.md</a>, Seções B (final) e E (final).</p>
+
+<h2>1. TDS vs. Amônia/BOD (<em>Biochemical Oxygen Demand</em>, demanda bioquímica de oxigênio) — a salinidade atrapalha o tratamento biológico?</h2>
+<p>Pergunta 3 do mapa geral (Lição 0001): salinidade elevada pode indicar estresse na comunidade biológica responsável pela nitrificação (remoção de amônia). Isso foi testado correlacionando os <strong>resíduos</strong> de TDS, Amônia e BOD contra o tempo — ou seja, depois de remover o fato de todas subirem juntas ao longo de 15 anos, o que resta é covariação mês a mês real, não coincidência de tendência comum.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/correlacao-tds-amonia-bod.png" alt="Correlação entre resíduos de TDS e de Amônia/BOD, três tratamentos de ND">
+      <figcaption>Figura do artigo (resultados.tex, linha 282): "Correlação entre os resíduos (após remoção da tendência temporal) de TDS e de Amônia/BOD (três tratamentos de ND)."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico:</strong>
+      <div class="step"><b>1.</b> São dispersões (<em>scatter plots</em>) de resíduo de TDS (eixo X) contra resíduo de Amônia e de BOD (eixo Y, em painéis separados) — cada ponto é um mês, já sem a tendência de longo prazo de nenhuma das duas séries.</div>
+      <div class="step"><b>2.</b> O que procurar: uma nuvem de pontos inclinada (subindo ou descendo) indica correlação real mês a mês; uma nuvem sem direção clara indica ausência de correlação residual.</div>
+      <div class="step"><b>3.</b> <span class="fact">TDS × Amônia: correlação positiva real, mesmo destendenciada (r=0,175, p=0,018)</span> — meses com TDS acima do esperado tendem a ter amônia também acima do esperado. Consistente com a hipótese: amônia residual mais alta sugere nitrificação incompleta, e isso coincide com salinidade elevada.</div>
+      <div class="step"><b>4.</b> TDS × BOD: <strong>sem correlação significativa</strong> em nenhum dos 3 tratamentos de dado não-detectado (ND) testados. Motivo registrado na Metodologia: o BOD do efluente fica rente ao limite de detecção (3,0 mg/L) em praticamente toda a série, com pouquíssima variação real — não há sinal suficiente na própria série de BOD para correlacionar com nada, independente de como se trata o ND.</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a resposta completa da pergunta 3 do mapa geral (Lição 0001) — um "sim parcial, com ressalva": TDS associa com estresse biológico via amônia, mas não há como testar isso via BOD (sinal insuficiente), uma limitação dos dados, não do método.</p>
+    <p class="afeta">Afeta: diretamente a seção de objetivos secundários de <code>resultados.tex</code> (linha 282) — não altera nenhuma decisão sobre tendência ou finalistas.</p>
+  </aside>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que TDS não correlaciona significativamente com BOD em nenhum dos 3 tratamentos de ND testados?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque o tratamento de dado não-detectado escolhido foi inadequado.</button>
+    <button class="opt" data-correct="true">Porque o BOD tem pouquíssima variação real, rente ao limite de detecção.</button>
+    <button class="opt" data-correct="false">Porque o TDS e o BOD são medidos em pontos físicos diferentes da ETE.</button>
+    <button class="opt" data-correct="false">Porque a série de BOD tem menos meses observados que a de TDS.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>2. Cenários climáticos — o número que substitui a extrapolação implausível</h2>
+<p>A Lição 0004 terminou com um "achado negativo, registrado e não escondido": extrapolar linearmente a carga/vazão do balanço de massa para +20 anos cruza valores fisicamente impossíveis (vazão negativa). <code>script_21_cenarios.py</code> resolve exatamente esse problema — substituindo a reta por uma projeção <strong>condicionada a cenários de seca</strong>, usando o PDSI histórico (processo AR(1): $\mu=-0{,}31$, $\phi=0{,}894$) e a relação já estabelecida na Lição 0003 (TDS ~ PDSI com defasagem de 4 meses).</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/cenarios-pdsi-fanchart.png" alt="Projeção condicional do cenário normal, fan chart com mediana e IC90%">
+      <figcaption>Figura do artigo (resultados.tex, linha 445): "Projeção condicional do cenário normal (mediana + IC90%) — não é previsão pontual."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler um "fan chart" (gráfico de leque):</strong>
+      <div class="step"><b>1.</b> A série observada aparece à esquerda, como sempre. À direita, em vez de uma única reta com uma banda, há uma mediana (linha central) com bandas de leque que se alargam — cada banda mais clara representa um percentil mais extremo das 2.000 simulações de Monte Carlo rodadas para o cenário "normal".</div>
+      <div class="step"><b>2.</b> A mensagem visual do nome "fan chart": <span class="interp">a incerteza não é um número único (como "±50 mg/L"), é uma distribuição inteira de futuros possíveis, simulada explicitamente a partir do comportamento histórico do PDSI.</span></div>
+      <div class="step"><b>3.</b> Isso é estruturalmente diferente do IC90% simples das Lições 0005/0006: ali, o IC vem da incerteza do ajuste do modelo; aqui, vem de simular 2.000 trajetórias plausíveis de seca/umidade e ver onde o TDS resultante cai.</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: cenários climáticos (Monte Carlo sobre PDSI)</summary>
+      <div class="body">
+        <dl>
+          <dt>Cenários climáticos</dt>
+          <dd>Ajusta um processo AR(1) (média-reversível) ao PDSI histórico completo, simula 2.000 trajetórias futuras de PDSI por cenário (mudando só a média-alvo: seco/normal/úmido/agravamento), e passa cada trajetória pela regressão TDS~PDSI já estimada — gera uma distribuição inteira de futuros plausíveis, não um único número.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#cenarios" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/cenarios-pdsi-horizontes.png" alt="Faixa de TDS por cenário climático e horizonte">
+      <figcaption>Figura do artigo (resultados.tex, linha 452): "Faixa de TDS por cenário climático e horizonte (mediana + IC90%)."</figcaption>
+    </figure>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a resposta de longo prazo que o projeto de fato defende perante a extrapolação linear implausível (Lição 0004): em vez de um número único para 2046, uma faixa condicionada a clima — essa mudança de enquadramento é a resposta correta pra "qual é a previsão final?".</p>
+    <p class="afeta">Afeta: a frase de fechamento de <code>conclusao.tex</code> sobre previsão de longo prazo ("não se apresenta um valor único de TDS para 2046...") — substitui a leitura mais simples dos 3 finalistas (Lição 0006) quando a pergunta é sobre 2046 especificamente.</p>
+  </aside>
+</div>
+
+<table class="cen">
+<tr><th>Cenário</th><th>+10 anos</th><th>+15 anos</th><th>+20 anos</th></tr>
+<tr><td>Seco</td><td>721 [596, 852]</td><td>720 [595, 848]</td><td>718 [588, 846]</td></tr>
+<tr><td>Agravamento climático</td><td>682 [561, 808]</td><td>697 [576, 826]</td><td>714 [591, 842]</td></tr>
+<tr><td>Normal</td><td>663 [536, 788]</td><td>659 [533, 784]</td><td>658 [529, 783]</td></tr>
+<tr><td>Úmido</td><td>597 [470, 721]</td><td>595 [470, 723]</td><td>594 [462, 721]</td></tr>
+</table>
+<p class="source">Fonte: Tabela \ref{tab:cenarios} do artigo (resultados.tex, linha 432). Valores: mediana [P5, P95] de TDS simulado em mg/L.</p>
+
+<div class="howto">
+  <strong>Como ler esta tabela e o gráfico de horizontes:</strong>
+  <div class="step"><b>1.</b> 4 linhas = 4 cenários climáticos (seco, agravamento climático, normal, úmido), cada um com sua própria trajetória assumida de PDSI futuro. 3 colunas = os 3 horizontes já conhecidos (+10/+15/+20 anos).</div>
+  <div class="step"><b>2.</b> Cada célula tem 3 números: a mediana das 2.000 simulações, e entre colchetes o percentil 5 e o percentil 95 — ou seja, a própria célula já é um IC90% interno.</div>
+  <div class="step"><b>3.</b> Achado notável: o cenário de "agravamento climático" converge para perto do cenário "seco" ao longo do horizonte (682→697→714, aproximando-se de 721→720→718) — esperado pelo desenho da rampa de média-alvo do PDSI nesse cenário, não um acaso.</div>
+  <div class="step"><b>4.</b> <span class="fact">Todas as faixas são fisicamente plausíveis — ao contrário da extrapolação linear da Lição 0004, que cruzava vazão negativa.</span> É exatamente esse ganho que justifica ter construído este método adicional.</div>
+  <div class="step"><b>5.</b> <strong>A frase certa para a banca, substituindo "qual é o número de 2046":</strong> <em>"não se apresenta um valor único de TDS para 2046 — a faixa de ~590 a ~850 mg/L, condicionada ao regime climático, é a resposta honesta que os dados permitem."</em> (citação direta do artigo). Isso não é evasão — é reconhecer que a pergunta "qual vai ser o valor exato" não tem resposta única responsável, dado que o próprio mecanismo causal (Lições 0003/0004) depende do regime de seca futuro, que é inerentemente incerto.</div>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que os cenários climáticos substituem a extrapolação linear simples do balanço de massa?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque a extrapolação linear tinha um erro de cálculo na fórmula usada.</button>
+    <button class="opt" data-correct="false">Porque os cenários são mais fáceis de calcular com menos dados históricos.</button>
+    <button class="opt" data-correct="true">Porque a extrapolação linear cruzava valores fisicamente implausíveis.</button>
+    <button class="opt" data-correct="false">Porque o PDSI é a única variável disponível depois de 2022 no dataset.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: a frase de fechamento do artigo sobre a previsão de longo prazo condicionada a clima.</summary>
+  <div class="answer">
+    <em>"Não se apresenta um valor único de TDS para 2046 — a faixa de ~590 a ~850 mg/L, condicionada ao regime climático, é a resposta honesta que os dados permitem."</em><br>
+    <span class="interp">Compare com os ~760-800 mg/L da extrapolação de tendência bruta dos 3 finalistas (Lição 0006) — a diferença é esperada: a extrapolação de tendência bruta carrega implicitamente o efeito de vazão continuando a cair indefinidamente, enquanto os cenários limitam essa vazão a valores fisicamente plausíveis.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode detalhar como as 2.000 simulações de Monte Carlo são geradas a partir do AR(1) do PDSI, explicar por que o cenário "agravamento climático" converge para o "seco" e não para o "úmido", ou simular a pergunta "por que não usar Cal-Adapt RCP 8.5 (<em>Representative Concentration Pathway</em>, cenário de emissões do IPCC — 8.5 é o mais severo) direto em vez de simular o PDSI?" (resposta: isso é feito no script_27, método avançado de baixa prioridade — Lição 0009).
+</div>
+
+<nav class="lesson-nav">
+  <a href="0007-bateria-robustez-sessao.html" target="_blank" rel="noopener noreferrer">← 0007 — A bateria de validação/robustez desta sessão</a>
+  <a href="0009-metodos-avancados.html" target="_blank" rel="noopener noreferrer">Próxima: 0009 — Métodos avançados (opcional) →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

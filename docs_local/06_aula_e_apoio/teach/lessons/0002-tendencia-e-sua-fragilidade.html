@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0002 — Tendência e sua fragilidade</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.4rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.4rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0 1.4rem; font-size: 0.92rem;
+  }
+  .howto .step { margin: 0.35rem 0; }
+  .howto .step b { color: var(--accent); }
+  table.sweep td.neg { color: var(--accent); font-weight: 600; }
+  table.sweep td.pos { color: var(--fact); font-weight: 600; }
+  svg.chart { width: 100%; height: auto; font-family: inherit; }
+  svg.chart .bar0 { fill: var(--fact); }
+  svg.chart .barneg { fill: var(--accent); }
+  svg.chart .axis { stroke: var(--ink-soft); stroke-width: 1; }
+  svg.chart text { fill: var(--ink-soft); font-size: 11px; }
+  svg.chart .zeroline { stroke: var(--ink-soft); stroke-dasharray: 3 3; }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0002 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>A tendência que não é tão sólida quanto parece</h1>
+<p class="lead">Objetivo desta lição: saber ler os dois gráficos de tendência do artigo de cabo a rabo, e carregar na manga o achado mais recente (já incorporado à conclusão do artigo em 2026-10-12): a tendência muda de sinal dependendo de quais anos você inclui.</p>
+<p class="source">Pré-requisito: <a href="0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">Lição 0001 — Mapa geral do projeto</a>. Fonte primária: <a href="../ROTEIRO_AULA_TDS_LAGWRP.md" target="_blank" rel="noopener noreferrer">ROTEIRO_AULA_TDS_LAGWRP.md</a>, Seção C.</p>
+
+<h2>Gráfico 1 do artigo: a tendência "oficial"</h2>
+<p>Este é o gráfico central da seção de resultados — <code>Figura \ref{fig:tendencia-tds}</code>, gerado por <code>script_01_mann_kendall_theilsen.py</code>.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/tendencia-tds.png" alt="TDS observado 2011-2026 e extrapolação por Mann-Kendall/Sen, Theil-Sen e OLS">
+      <figcaption>Figura do artigo (resultados.tex, linha 32): "TDS observado (2011–2026) e previsão de tendência por Mann-Kendall/Sen, Theil-Sen e OLS, com incerteza para +10/+15/+20 anos."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico, passo a passo:</strong>
+      <div class="step"><b>1.</b> A linha/pontos escuros à esquerda são os dados <em>observados</em> de TDS (mg/L), mensais, de fevereiro de 2011 a março de 2026 — 182 pontos, sem lacunas.</div>
+      <div class="step"><b>2.</b> À direita do fim da série, três retas se abrem em leque — são as extrapolações dos três métodos (MK/Sen, Theil-Sen, OLS). MK/Sen e Theil-Sen não "quase" coincidem: <span class="interp">são o mesmo estimador de inclinação (mediana das inclinações par-a-par) calculado por dois caminhos de código diferentes</span> — slope, intercepto e as 3 previsões saem idênticos byte a byte em <code>resultados_comparacao.csv</code>, não é coincidência, é matemática. Isso escondia a linha azul (MK/Sen) por completo atrás da verde (Theil-Sen) na figura original; corrigido em 2026-10-12 dando à linha de baixo uma "auréola" mais grossa (<code>script_01_mann_kendall_theilsen.py</code>, função <code>gerar_figura</code>) — a figura acima já reflete a correção.</div>
+      <div class="step"><b>3.</b> A banda sombreada ao redor de cada reta é o intervalo de incerteza projetado para +10/+15/+20 anos. <span class="fact">Quanto mais longe no tempo, mais larga a banda</span> — isso é esperado para qualquer extrapolação linear.</div>
+      <div class="step"><b>4.</b> O que o gráfico <em>não</em> mostra, mas a Tabela \ref{tab:tendencia-tds} ao lado mostra: o <a href="../reference/glossario-estatistico.html#r2" target="_blank" rel="noopener noreferrer">R²</a> dessa reta no holdout (últimos 24 meses) é <strong>negativo</strong> (-0,66 para MK/Theil-Sen, -0,54 para OLS). Isso significa que, nesse período de teste, a reta erra mais do que simplesmente "chutar a média" — a direção de longo prazo está certa, mas a reta não captura nada do movimento de curto prazo.</div>
+      <div class="step"><b>5.</b> Pergunta de banca típica: "se o R² é negativo, por que vocês ainda reportam esse método?" Resposta: ele não é usado como previsão final — é o ponto de partida estatístico (MK/Sen é o teste padrão de tendência em séries ambientais) que justifica investigar <em>por que</em> a série sobe, não a ferramenta de previsão (essa vem depois, na bateria de ML/série temporal).</div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funcionam: Mann-Kendall/Sen, Theil-Sen e OLS</summary>
+      <div class="body">
+        <dl>
+          <dt>Mann-Kendall + Sen's slope</dt>
+          <dd>Compara o sinal da diferença entre <strong>todos os pares</strong> de observações (não assume distribuição); a inclinação é a <strong>mediana</strong> das inclinações par-a-par — robusto a outliers.</dd>
+          <dt>Theil-Sen</dt>
+          <dd>Mesmo estimador (mediana das inclinações par-a-par), calculado por um caminho de código independente — por isso os números batem byte a byte.</dd>
+          <dt>OLS</dt>
+          <dd>Minimiza a soma dos erros ao quadrado — a regressão linear "de sala de aula". Sensível a outliers, assume erros ~normais pra o IC/p-valor serem válidos.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#mann-kendall-sen" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É o ponto de partida estatístico que justifica todo o resto do projeto: a tendência existe e é significativa (<a href="../reference/glossario-estatistico.html#p-valor" target="_blank" rel="noopener noreferrer">p-valor</a>=0,0056 — a chance de ver essa inclinação por puro acaso, se não houvesse tendência real, é de só 0,56%; ver Tabela \ref{tab:tendencia-tds} no gráfico acima). Mas o <a href="../reference/glossario-estatistico.html#r2" target="_blank" rel="noopener noreferrer">R²</a> negativo no holdout (passo 4 acima) mostra que "reta única" não é uma ferramenta de previsão útil — ela erra mais que só chutar a média no curto prazo, mesmo acertando a direção de longo prazo. Por isso essa reta é o gatilho para investigar o mecanismo (Lição 0003), não a ferramenta final de previsão.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-15" target="_blank" rel="noopener noreferrer">D-15</a> — reportar as 5 variantes de correção de autocorrelação do Mann-Kendall como tabela de robustez, em vez de escolher uma só.</p>
+  </aside>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">Por que o R² da reta de tendência é negativo no holdout, mesmo com p&lt;0,01 na tendência?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Porque a direção da tendência estimada está invertida e incorreta.</button>
+    <button class="opt" data-correct="true">Porque a reta não captura flutuações de curto prazo da série real.</button>
+    <button class="opt" data-correct="false">Porque o valor de p foi calculado de forma estatisticamente incorreta.</button>
+    <button class="opt" data-correct="false">Porque o holdout usado tem erro de digitação nos dados originais.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>Gráfico 2 do artigo: por que a série não é "homogênea"</h2>
+<p>Antes de qualquer ajuste, a série passa pelo diagnóstico estrutural — <code>Figura \ref{fig:diagnostico-estrutura}</code>, gerado por <code>script_07_analise_estrutura_serie.py</code>.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/diagnostico-sazonalidade-quebras.png" alt="Decomposição STL, componente sazonal e correlogramas ACF/PACF da série de TDS">
+      <figcaption>Figura do artigo (resultados.tex, linha 17): "Diagnóstico estrutural da série de TDS: tendência STL, componente sazonal, ACF e PACF (nível)."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler este gráfico — são 4 painéis, lidos em sequência:</strong>
+      <div class="step"><b>Painel 1 (tendência STL):</b> a componente de tendência extraída por decomposição STL (<em>Seasonal-Trend decomposition using Loess</em>) — uma curva suave, não uma reta. <span class="interp">Se essa curva sobe-desce-sobe em vez de só subir, é o primeiro sinal visual do padrão cíclico</span> (a "virada" da Lição 0001).</div>
+      <div class="step"><b>Painel 2 (componente sazonal):</b> o padrão que se repete dentro de cada ano, já isolado da tendência. A força de sazonalidade $F_s=0{,}25$ está citada no texto — abaixo do limiar de referência 0,64, ou seja, sazonalidade fraca/moderada: não é o fator dominante.</div>
+      <div class="step"><b>Painel 3 (ACF — autocorrelação):</b> mede o quanto o valor de um mês se correlaciona com o valor $k$ meses atrás, para vários $k$. Barras que saem da faixa sombreada (intervalo de confiança) indicam autocorrelação estatisticamente detectável naquele <em>lag</em>. Uma série com tendência forte tende a ter ACF que decai lentamente — é esperado aqui.</div>
+      <div class="step"><b>Painel 4 (PACF — autocorrelação parcial):</b> igual ao ACF, mas removendo o efeito dos <em>lags</em> intermediários — é o que orienta a escolha da ordem AR do SARIMA (Lição 0003 explica isso em detalhe).</div>
+      <div class="step"><b>Conexão com o texto:</b> os testes de quebra estrutural (Chow no ponto EFF-001→EFF-001A em 2012-01, Pettitt sem ponto fixo, CUSUM — <em>Cumulative Sum</em>, soma cumulativa dos desvios, outro teste clássico de quebra) todos rejeitam homogeneidade. Pettitt aponta abril de 2014 — dentro da seca 2012–2016, não na data exata da troca de código. <span class="fact">Isso é evidência de que a quebra é climática (seca), não um artefato de mudança de monitoramento.</span></div>
+    </div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: STL</summary>
+      <div class="body">
+        <dl>
+          <dt>STL (Seasonal-Trend decomposition using Loess)</dt>
+          <dd>Separa a série em tendência (suavização local iterativa, uma curva, não uma reta) + sazonalidade + resíduo — cada componente é reestimada em ciclos, refinando a separação entre elas.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#stl" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a primeira evidência quantitativa (antes de trazer o PDSI) de que a quebra na série não é a transição de código do sensor — o teste de Pettitt aponta uma data diferente, dentro da seca. Sem esse painel, a hipótese "é só troca de instrumentação" ficaria sem resposta direta.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-13" target="_blank" rel="noopener noreferrer">D-13</a> — descartar "quebra = artefato de modelagem/instrumentação" como explicação suficiente, abrindo caminho para o reenquadramento cíclico da <a class="dcode" href="../reference/decisoes-citadas.html#D-14" target="_blank" rel="noopener noreferrer">D-14</a>.</p>
+  </aside>
+</div>
+
+<h2>O achado mais recente: a tendência muda de sinal</h2>
+<p>Esta parte vem da bateria de robustez (<span class="dcode">issue #1</span>, item <em>5b — remover os N primeiros anos</em>, em <code>script_31_testes_robustez_avancados.py</code>). O parágrafo com esses números já foi colado em <code>conclusao.tex</code> (2026-10-12) — o artigo cita o texto corrido; não existe uma figura dedicada a esse achado no manuscrito, então o gráfico abaixo foi construído especificamente para esta lição.</p>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <svg class="chart" viewBox="0 0 640 260" preserveAspectRatio="xMidYMid meet">
+      <!-- zero line at y=130 -->
+      <line class="zeroline" x1="60" y1="130" x2="600" y2="130"></line>
+      <line class="axis" x1="60" y1="20" x2="60" y2="230"></line>
+      <line class="axis" x1="60" y1="230" x2="600" y2="230"></line>
+      <text x="15" y="134">0</text>
+      <text x="5" y="42">+5</text>
+      <text x="5" y="222">-5</text>
+      <!-- bars: scale 1 mg/L/ano = 20px, zero at y=130 -->
+      <!-- completa: 3.91 -->
+      <g>
+        <rect class="bar0" x="75" y="51.8" width="55" height="78.2"></rect>
+        <text x="80" y="245">completa</text>
+        <text x="85" y="42">3,91</text>
+      </g>
+      <!-- sem 1 ano: 1.18 -->
+      <g>
+        <rect class="bar0" x="155" y="106.4" width="55" height="23.6"></rect>
+        <text x="150" y="245">-1º ano</text>
+        <text x="162" y="97">1,18</text>
+      </g>
+      <!-- sem 2 anos: -2.00 -->
+      <g>
+        <rect class="barneg" x="235" y="130" width="55" height="40"></rect>
+        <text x="222" y="245">-2 anos</text>
+        <text x="238" y="183">-2,00</text>
+      </g>
+      <!-- sem 3 anos: -4.25 -->
+      <g>
+        <rect class="barneg" x="315" y="130" width="55" height="85"></rect>
+        <text x="302" y="245">-3 anos</text>
+        <text x="316" y="228">-4,25</text>
+      </g>
+      <!-- sem 4 anos: -4.63 -->
+      <g>
+        <rect class="barneg" x="395" y="130" width="55" height="92.6"></rect>
+        <text x="382" y="245">-4 anos</text>
+        <text x="394" y="241">-4,63</text>
+      </g>
+      <!-- sem 5 anos: 0.00 -->
+      <g>
+        <rect class="bar0" x="475" y="129" width="55" height="2"></rect>
+        <text x="462" y="245">-5 anos</text>
+        <text x="482" y="120">0,00</text>
+      </g>
+      <text x="300" y="14" text-anchor="middle" font-size="12" font-weight="600">Inclinação Mann-Kendall/Sen (mg/L/ano) ao remover os N primeiros anos</text>
+    </svg>
+    <p class="source">Fonte dos números: <code>results/testes_robustez_resultados.csv</code>, item <code>5b_remover_primeiros_n_anos</code> (idêntico para Mann-Kendall/Sen e Theil-Sen). Rodado em 2026-10-10.</p>
+
+    <div class="howto">
+      <strong>Como ler este gráfico (o que eu construí para esta lição):</strong>
+      <div class="step"><b>1.</b> Cada barra é a mesma análise de tendência (Mann-Kendall/Sen) rodada em sub-séries cada vez mais curtas: a barra "completa" usa todos os 182 meses; "-1º ano" remove 2011; "-2 anos" remove 2011+2012; e assim por diante.</div>
+      <div class="step"><b>2.</b> Barra verde = inclinação positiva (sobe); barra vermelha = inclinação negativa (desce). <span class="interp">A tendência não só perde significância ao remover os primeiros anos — ela inverte de sinal.</span></div>
+      <div class="step"><b>3.</b> Com 3 ou 4 anos iniciais removidos, a inclinação é <strong>negativa e estatisticamente significativa</strong> (p=0,017 e p=0,027 — ambos abaixo de 0,05). Ou seja: dependendo de onde você começa a contar, o estudo concluiria "TDS está caindo", não "subindo".</div>
+      <div class="step"><b>4.</b> Com 5 anos removidos, a inclinação cai para exatamente zero (p=0,91) — a série fica sem tendência detectável nenhuma.</div>
+      <div class="step"><b>5.</b> Isso <strong>não invalida</strong> a conclusão do artigo (3,91 mg/L/ano na série completa) — mas mostra que ela depende fortemente do início dos dados, que coincide com (a) a transição de código <code>EFF-001→EFF-001A</code>, (b) uma troca de MDL (<em>Method Detection Limit</em>, limite de detecção do método analítico de laboratório)/método analítico em 2011-06-04 (p=0,017, já documentada em <code>script_17</code>), e (c) o início da seca 2012–2016. A leitura honesta para a banca: "a tendência de longo prazo é real na série completa, mas é sensível aos primeiros ~3 anos, por razões de instrumentação E de clima, não só de clima."</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É o achado mais recente e mais "incômodo" do projeto — qualifica a força da conclusão central sem invalidá-la. É o tipo de achado negativo que fica represado fora do texto se ninguém força a propagação (ver <code>PADROES_DE_RISCO.md</code>).</p>
+    <p class="afeta">Afeta: diretamente o parágrafo de limitações de <code>conclusao.tex</code> (colado em 2026-10-12) — a tendência passa a ser defendida como "robusta na série completa, mas sensível ao recorte", não como um número único e incondicional.</p>
+  </aside>
+</div>
+
+<div class="quiz" data-quiz>
+  <div class="q">O que acontece com a inclinação de Mann-Kendall/Sen ao remover os 3 primeiros anos da série?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Permanece positiva, mas perde toda significância estatística.</button>
+    <button class="opt" data-correct="true">Inverte de sinal e fica negativa, com significância estatística.</button>
+    <button class="opt" data-correct="false">Permanece idêntica, porque Sen é robusto a esse corte.</button>
+    <button class="opt" data-correct="false">Fica indefinida, pois o teste exige pelo menos 15 anos.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: cite as 3 causas possíveis da fragilidade da tendência aos primeiros anos.</summary>
+  <div class="answer">
+    <strong>1. Instrumentação:</strong> mudança de MDL/método analítico em 2011-06-04 (<span class="dcode">script_17</span>, teste <code>3_mudanca_mdl</code>, p=0,017).<br>
+    <strong>2. Monitoramento:</strong> transição de código <code>EFF-001</code>→<code>EFF-001A</code> por volta de 2012-01 (teste de Chow, F=15,42, p&lt;0,0001).<br>
+    <strong>3. Clima:</strong> início da seca da Califórnia 2012–2016 (teste de Pettitt aponta abril de 2014, dentro dessa janela).<br>
+    <span class="interp">As três coincidem temporalmente nos primeiros 3-4 anos da série — é exatamente por isso que removê-los muda tanto o resultado.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode reconstruir qualquer um desses números a partir do CSV, simular uma pergunta de banca sobre "qual tendência é a verdadeira?", ou explicar por que o teste de Pettitt e o de Chow discordam sobre a data exata da quebra.
+</div>
+
+<nav class="lesson-nav">
+  <a href="0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">← 0001 — Mapa geral do projeto</a>
+  <a href="0003-investigacao-causal-pdsi.html" target="_blank" rel="noopener noreferrer">Próxima: 0003 — Investigação causal: não é artefato, é seca →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0001 — Mapa geral do projeto</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div class="kicker">Lição 0001 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>O mapa geral: de uma pergunta simples a cinco respostas</h1>
+<p class="lead">Objetivo desta lição: conseguir recitar, sem notas, os 5 objetivos do projeto e suas 5 respostas — a espinha dorsal que qualquer resposta de banca deve se encaixar.</p>
+
+<h2>A pergunta original</h2>
+<p>O professor pediu uma análise de tendência de longo prazo de <strong>TDS</strong> (sólidos dissolvidos totais, mg/L) no efluente da <strong>LAGWRP</strong>, com uma referência-âncora (<a href="https://www.nature.com/articles/s41893-020-0529-2" target="_blank" rel="noopener noreferrer">Schwabe et al. 2020, <em>Nature Sustainability</em></a> — resumo, texto completo não acessado) propondo o mecanismo: <span class="interp">conservação de água → menos vazão → menos diluição → TDS sobe</span>.</p>
+<p class="source">Fonte: <a href="../ROTEIRO_AULA_TDS_LAGWRP.md" target="_blank" rel="noopener noreferrer">ROTEIRO_AULA_TDS_LAGWRP.md</a>, Seção A · <a href="../reference/referencias-bibliograficas.html" target="_blank" rel="noopener noreferrer">Bibliografia do projeto</a>.</p>
+
+<h2>As 5 respostas (o que vai na conclusão do artigo)</h2>
+<table>
+<tr><th>#</th><th>Pergunta</th><th>Resposta (número real)</th></tr>
+<tr><td>1</td><td>TDS está subindo?</td><td class="fact">Série completa: sim, 3,7–3,9 mg/L/ano, p&lt;0,01 — <strong>mas</strong> isso não é a leitura final (ver abaixo)</td></tr>
+<tr><td>2</td><td>Previsão +10/15/20 anos?</td><td class="fact">3 finalistas convergem em ~760–800 mg/L em +20 anos</td></tr>
+<tr><td>3</td><td>TDS correlaciona com Amônia/BOD (<em>Biochemical Oxygen Demand</em>, demanda bioquímica de oxigênio — nome mantido em inglês por ser a coluna original do dataset)?</td><td class="fact">Amônia: sim, positiva (r=0,175, p=0,018). BOD: negativa, não-significativa</td></tr>
+<tr><td>4</td><td>Cloreto ajuda a prever TDS?</td><td class="fact">Coeficiente significativo, mas não melhora a previsão na prática</td></tr>
+<tr><td>5</td><td>Por que esse padrão existe?</td><td class="fact">Diluição por vazão (seca), não mais sal entrando — balanço de massa confirma</td></tr>
+</table>
+<p class="source">Fonte: <code>conclusao.tex</code> (parágrafos 1-5); <a href="../AULA_JORNADA_DO_PROJETO.md" target="_blank" rel="noopener noreferrer">AULA_JORNADA_DO_PROJETO.md</a>, Parte I.</p>
+
+<h2>A virada central: de reta a ciclo</h2>
+<p>O resultado inicial parecia uma reta subindo. A reconstrução da vazão (<a class="dcode" href="../reference/decisoes-citadas.html#D-12" target="_blank" rel="noopener noreferrer">D-12</a>) e a investigação do que parecia um degrau no gráfico (<a class="dcode" href="../reference/decisoes-citadas.html#D-13" target="_blank" rel="noopener noreferrer">D-13</a>) mostraram algo diferente: <span class="interp">a série sobe de 563 para 808 mg/L entre 2011-2015 (coincide com a seca da Califórnia 2012-2016), cai até 636 mg/L em 2019, sobe de novo até 768 mg/L em 2022 (segunda seca) e recua depois</span> — um padrão cíclico ligado a regimes de seca, não uma tendência monotônica (<a class="dcode" href="../reference/decisoes-citadas.html#D-14" target="_blank" rel="noopener noreferrer">D-14</a>, <a class="dcode" href="../reference/decisoes-citadas.html#D-31" target="_blank" rel="noopener noreferrer">D-31</a>).</p>
+<p class="source">Fonte: ROTEIRO_AULA, Seção C; AULA_JORNADA, Parte C (<a class="dcode" href="../reference/decisoes-citadas.html#D-12" target="_blank" rel="noopener noreferrer">D-12</a>–<a class="dcode" href="../reference/decisoes-citadas.html#D-14" target="_blank" rel="noopener noreferrer">D-14</a>).</p>
+
+<div class="quiz" data-quiz>
+  <div class="q">Qual é a leitura final do projeto sobre a tendência de TDS na série completa?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Uma alta constante e monotônica, sem qualquer variação cíclica relevante.</button>
+    <button class="opt" data-correct="true">Um padrão cíclico ligado a secas, não uma alta constante e monotônica.</button>
+    <button class="opt" data-correct="false">Uma queda constante e monotônica, sem qualquer variação cíclica relevante.</button>
+    <button class="opt" data-correct="false">Um ruído aleatório, sem relação alguma com vazão ou com secas.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<h2>O mecanismo causal, em uma frase</h2>
+<p>O balanço de massa (<a class="dcode" href="../reference/decisoes-citadas.html#D-40" target="_blank" rel="noopener noreferrer">D-40</a>) separa os dois componentes: a <strong>carga de sal</strong> caiu -3,20%/ano e a <strong>vazão</strong> caiu -3,85%/ano no mesmo período (p&lt;0,0001 nos dois). <span class="fact">O mecanismo é diluição variável, não mais sal entrando no sistema.</span> O WRTDS (<a class="dcode" href="../reference/decisoes-citadas.html#D-39" target="_blank" rel="noopener noreferrer">D-39</a>) confirma pelo outro lado: a tendência "flow-normalized" (depois de descontar vazão) não é significativa (p=0,064) — quase toda a tendência bruta é efeito de vazão.</p>
+
+<p>Esse mecanismo não é uma hipótese isolada deste projeto: <a href="https://pubs.acs.org/doi/10.1021/acsestwater.2c00005" target="_blank" rel="noopener noreferrer">Wolfand et al. 2022</a> (resumo) encontram o mesmo efeito na bacia do rio Los Angeles — onde a LAGWRP descarrega — modelando cenários de reúso de água; e <a href="https://www.tandfonline.com/doi/full/10.1080/23789689.2023.2180251" target="_blank" rel="noopener noreferrer">Porse et al. 2023</a> (texto completo lido), numa pesquisa estadual com 45 estações do sul da Califórnia, encontram queda de 6-10% na vazão e aumento de 5-12% no TDS durante a seca de 2014-2016 — a mesma direção de efeito, numa escala muito maior que a de uma única estação. <span class="interp">Isso importa pra banca: o padrão observado na LAGWRP não é uma particularidade da estação, é um mecanismo documentado em múltiplas escalas (bacia hidrográfica, estado inteiro).</span></p>
+<p class="source">Detalhe de cada estudo: <a href="../reference/referencias-bibliograficas.html" target="_blank" rel="noopener noreferrer">Bibliografia do projeto</a>.</p>
+
+<div class="quiz" data-quiz>
+  <div class="q">Qual mecanismo o balanço de massa confirma como responsável pelo padrão cíclico do TDS?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Mais sal entrando no sistema, não relacionado à vazão do efluente.</button>
+    <button class="opt" data-correct="true">Diluição variável: a vazão cai junto com a carga de sal.</button>
+    <button class="opt" data-correct="false">Mudança no método analítico usado pelo laboratório ao longo dos anos.</button>
+    <button class="opt" data-correct="false">Falha de calibração dos sensores de salinidade da estação de tratamento.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: cite os 3 finalistas da bateria de previsão e o critério de escolha de cada um.</summary>
+  <div class="answer">
+    <strong>Regressão bayesiana</strong> — única com incerteza "honesta" por construção (IC90 cresce suave e proporcional ao horizonte), tendência com probabilidade posterior &gt;99%.<br>
+    <strong>Detrend+RF</strong> — melhor MASE de holdout entre os métodos que capturam tendência sem saturar.<br>
+    <strong>Híbrido SARIMA+Prophet</strong> — melhor RMSE de holdout entre os métodos de série temporal, IC90 mais largo (cenário cauteloso).<br>
+    <span class="interp">Atenção: a justificativa do Detrend+RF mudou nesta semana — ver <a href="0006-metodos-adicionais-e-finalistas.html" target="_blank" rel="noopener noreferrer">Lição 0006</a> antes de citar "resíduo limpo" na banca.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele é seu professor nesta jornada e pode aprofundar qualquer ponto desta lição, citar o D-XX exato, ou simular uma pergunta de banca sobre este trecho.
+</div>
+
+<nav class="lesson-nav">
+  <span>← (esta é a primeira lição)</span>
+  <a href="0002-tendencia-e-sua-fragilidade.html" target="_blank" rel="noopener noreferrer">Próxima: 0002 — Tendência e sua fragilidade →</a>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

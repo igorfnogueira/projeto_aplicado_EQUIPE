@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0009 — Métodos avançados (baixa prioridade)</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  figure.art { margin: 1.2rem 0; }
+  figure.art img { width: 100%; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+  figure.art figcaption { font-size: 0.8rem; color: var(--ink-soft); margin-top: 0.35rem; }
+  .howto {
+    background: var(--interp-bg); border-radius: 6px; padding: 0.75rem 1rem;
+    margin: 0.4rem 0 1.1rem; font-size: 0.88rem;
+  }
+  .howto .step { margin: 0.3rem 0; }
+  .howto .step b { color: var(--accent); }
+  .priority {
+    font-family: "Helvetica Neue", Arial, sans-serif; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 0.15em 0.6em; display: inline-block; margin-bottom: 0.4rem;
+  }
+  table.adv { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.82rem; }
+  table.adv th, table.adv td { border-bottom: 1px solid var(--rule); padding: 0.3rem 0.45rem; text-align: left; }
+</style>
+</head>
+<body>
+
+<div class="kicker">Lição 0009 · Defesa do TCC — TDS/LAGWRP</div>
+<h1>O resto da bateria: 34+ métodos, nível "não travar se perguntarem"</h1>
+<p class="lead">Objetivo desta lição, deliberadamente mais leve que as anteriores: saber que cada um destes métodos existe, o que ele testou, e o resultado em uma frase — o suficiente para responder sem gaguejar, não para defender em profundidade. Nenhum destes muda os finalistas ou a conclusão central (Lições 0001-0008).</p>
+<p class="source">Pré-requisito: <a href="0008-objetivos-secundarios.html" target="_blank" rel="noopener noreferrer">Lição 0008 — Objetivos secundários</a>. Fonte: resultados.tex, Seções "Métodos adicionais" finais; DECISOES.md, <a class="dcode" href="../reference/decisoes-citadas.html#D-45" target="_blank" rel="noopener noreferrer">D-45</a> a <a class="dcode" href="../reference/decisoes-citadas.html#D-57" target="_blank" rel="noopener noreferrer">D-57</a>.</p>
+
+<h2>O achado desta lição que pode virar pergunta real: TDS de origem (LADWP)</h2>
+<span class="priority">Prioridade moderada — não é "baixa", mas também não muda a conclusão</span>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/ladwp-tds-origem-vs-efluente.png" alt="TDS de origem ponderado (LADWP) vs TDS de efluente da LAGWRP">
+      <figcaption>Figura do artigo (resultados.tex, linha 529): "TDS de origem ponderado (LADWP, 2004–2024) vs. TDS de efluente da LAGWRP: série anual (esquerda) e dispersão com reta de tendência (direita)."</figcaption>
+    </figure>
+    <div class="howto">
+      <strong>Como ler — e por que este número é mais forte que tudo visto até aqui:</strong>
+      <div class="step"><b>Painel esquerdo:</b> duas séries anuais sobrepostas — o TDS médio da água de origem (calculado a partir de 21 relatórios anuais da LADWP, ponderado pelo mix de fontes: Los Angeles Aqueduct, poços locais, água importada via MWD) e o TDS médio anual do efluente da LAGWRP.</div>
+      <div class="step"><b>Painel direito:</b> dispersão simples entre as duas, com reta de tendência.</div>
+      <div class="step"><span class="fact">A correlação é r=0,912 (p=0,000005) — mais forte que a já obtida com o PDSI via decomposição LMG (Lindeman-Merenda-Gold, 67-79%, Lição 0003).</span> Isso significa: o TDS da água que entra na cidade explica o TDS do efluente ainda melhor que o índice de seca usado como proxy em todo o resto do projeto.</div>
+      <div class="step"><b>Por que não é o headline do projeto:</b> 3 limitações declaradas no artigo — (1) o peso usado para a água importada da MWD é uma média simples das 3 estações de tratamento, não o peso real publicado; (2) a correlação é <em>anual</em>, não mensal (os relatórios não têm granularidade mensal, então não dá pra testar defasagem fina como com o PDSI); (3) os dados cobrem o lado Los Angeles do abastecimento, não o lado Glendale (parte da área de serviço da LAGWRP), cujo dado equivalente não foi obtido.</div>
+      <div class="step"><b>Pergunta de banca provável:</b> "se essa correlação é mais forte, por que o projeto não usa isso como mecanismo principal?" Resposta: é uma confirmação complementar e mais direta do mesmo mecanismo já estabelecido via PDSI (Lições 0003/0004) — reforça, não substitui, porque chegou tarde no projeto e tem granularidade/cobertura geográfica mais limitadas. É também a <strong>recomendação principal de trabalho futuro</strong> do artigo: obter o dado mensal e do lado Glendale resolveria essas limitações.</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>É a confirmação mais forte do mecanismo causal de todo o projeto, mas chegou tarde demais pra reformular o argumento principal em torno dela — por isso vira recomendação de trabalho futuro, não o novo headline.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-54" target="_blank" rel="noopener noreferrer">D-54</a> — e a recomendação de trabalho futuro em <code>conclusao.tex</code> (obter dado mensal/lado Glendale).</p>
+  </aside>
+</div>
+
+<h2>Cenário climático com projeção real (Cal-Adapt, RCP 8.5 — <em>Representative Concentration Pathway</em>, cenário de emissões do IPCC, 8.5 é o mais severo)</h2>
+<span class="priority">Baixa prioridade</span>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/cenario-caladapt-rcp85.png" alt="Cenários históricos vs cenário fundamentado em projeção climática real Cal-Adapt RCP 8.5">
+      <figcaption>Figura do artigo (resultados.tex, linha 516): "Cenários históricos (script_21) vs. cenário fundamentado em projeção climática real (Cal-Adapt, RCP 8.5) em +20 anos."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step">Substitui a suposição genérica de regime climático futuro (Lição 0008) por uma projeção real do Cal-Adapt (ensemble de 32 modelos climáticos). A precipitação projetada cai só 2,3% até 2035-2064 — mudança modesta, convertida num "PDSI-alvo implícito" entre os cenários "normal" e "seco" já existentes. Resultado: faixa de 662-670 mg/L, <strong>entre</strong> os dois cenários — não contradiz nem duplica os 4 cenários da Lição 0008, só os ancora numa fonte de dado climático oficial.</div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Dá lastro oficial (não só histórico) aos cenários da Lição 0008, sem mudar a conclusão.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-51" target="_blank" rel="noopener noreferrer">D-51</a>.</p>
+  </aside>
+</div>
+
+<h2>PDSI como covariável na bateria original (<a class="dcode" href="../reference/decisoes-citadas.html#D-56" target="_blank" rel="noopener noreferrer">D-56</a>/<a class="dcode" href="../reference/decisoes-citadas.html#D-57" target="_blank" rel="noopener noreferrer">D-57</a>)</h2>
+<span class="priority">Baixa prioridade</span>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/bateria-pdsi-covariavel-comparacao.png" alt="RMSE de holdout da bateria original vs com PDSI como covariável, por método">
+      <figcaption>Figura do artigo (resultados.tex, linha 570): "RMSE de holdout da bateria original vs. com PDSI como covariável, por método."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step"><b>Pergunta testada:</b> já que o PDSI explica o <em>regime</em> climático (Lição 0003), ele também melhora a <em>previsão</em> se virar um regressor a mais nos 12 métodos que aceitam exógena? Cada barra compara RMSE de holdout antes/depois de adicionar PDSI.</div>
+      <div class="step"><span class="fact">Resultado: não é melhora consistente — só 4 dos 12 métodos melhoraram (XGBoost -13,8%, regressão quantílica -26,6% nos maiores ganhos); os outros 8 pioraram, alguns bastante (Prophet +18,5%, híbrido +17,0%).</span> Interpretação: WRTDS/balanço de massa/cenários já usam o PDSI de forma estrutural; aqui ele é só uma feature a mais, e o ganho só aparece nos métodos mais flexíveis para capturar não-linearidade (árvores, quantílica) — não generaliza para métodos lineares/de decomposição.</div>
+    </div>
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/pdsi-finetuning-multilag-comparacao.png" alt="RMSE de holdout dos 4 métodos que melhoraram, lag único vs representação refinada de PDSI">
+      <figcaption>Figura do artigo (resultados.tex, linha 585): "RMSE de holdout dos 4 métodos que melhoraram em <a class="dcode" href="../reference/decisoes-citadas.html#D-56" target="_blank" rel="noopener noreferrer">D-56</a>, comparando o lag único (<a class="dcode" href="../reference/decisoes-citadas.html#D-56" target="_blank" rel="noopener noreferrer">D-56</a>) vs. a representação refinada de PDSI (<a class="dcode" href="../reference/decisoes-citadas.html#D-57" target="_blank" rel="noopener noreferrer">D-57</a>)."</figcaption>
+    </figure>
+    <div class="howto">
+      <div class="step">Dos 4 métodos que melhoraram acima, testou-se se múltiplos <em>lags</em> de PDSI simultâneos melhoram ainda mais. Critério rígido: só conta se melhorar tanto no holdout <strong>quanto</strong> na CV expansiva (não só no holdout, que com 182 meses pode ser ruído de amostra pequena). <span class="fact">Só o XGBoost melhorou de fato sob esse critério (-5,3% holdout, -2,0% CV) — Random Forest e LightGBM pioraram nas duas métricas; a regressão quantílica confirmou que o lag de 4 meses original já era o ótimo.</span></div>
+    </div>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Mostra que "PDSI explica o regime" (Lição 0003) e "PDSI melhora a previsão como feature" são achados independentes — o primeiro é verdadeiro, o segundo não generaliza. Nenhum finalista muda.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-56" target="_blank" rel="noopener noreferrer">D-56</a>/<a class="dcode" href="../reference/decisoes-citadas.html#D-57" target="_blank" rel="noopener noreferrer">D-57</a>.</p>
+  </aside>
+</div>
+
+<h2>Cinco métodos complementares — uma frase cada</h2>
+<span class="priority">Baixa prioridade — mencionar que existem, não defender em profundidade</span>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/espaco-estados-tds.png" alt="Espaço de estados UnobservedComponents">
+      <figcaption>Figura do artigo (resultados.tex, linha 475): "Espaço de estados (UnobservedComponents) — TDS observado, ajuste e previsão com IC90 nativo."</figcaption>
+    </figure>
+    <div class="howto"><div class="step"><b>Espaço de estados (local linear trend + sazonal):</b> mesmo com liberdade para a tendência variar no tempo, o modelo não encontrou evidência de variação genuína (variância ~0, p=1,000) — consistente com o WRTDS (Lição 0004). IC90 mais largo de toda a bateria, holdout não supera o naive.</div></div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: espaço de estados / DLM</summary>
+      <div class="body">
+        <dl>
+          <dt>Espaço de estados (Dynamic Linear Model)</dt>
+          <dd>Trata tendência e sazonalidade como "estados" não-observados que evoluem no tempo, estimados via filtro de Kalman. A especificação <em>local linear trend</em> permite (mas não força) que a inclinação mude mês a mês.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#espaco-estados" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Confirma o WRTDS (Lição 0004) por um caminho independente, sem mudar nenhum finalista.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-45" target="_blank" rel="noopener noreferrer">D-45</a>.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/gam-tds.png" alt="GAM com suavização P-splines">
+      <figcaption>Figura do artigo (resultados.tex, linha 482): "GAM (s(tempo) + s(mês)) — ajuste e previsão com o piso de suavização declarado (<a class="dcode" href="../reference/decisoes-citadas.html#D-46" target="_blank" rel="noopener noreferrer">D-46</a>)."</figcaption>
+    </figure>
+    <div class="howto"><div class="step"><b>GAM:</b> sem restrição, a extrapolação explode (quase 3x o último valor em +10 anos) — patologia conhecida de P-splines. Corrigido com um piso declarado de suavização, a previsão passa a ter leve tendência de <em>queda</em> no longo prazo — mais um método com extrapolação de longo prazo estruturalmente frágil.</div></div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: GAM</summary>
+      <div class="body">
+        <dl>
+          <dt>GAM (Generalized Additive Model)</dt>
+          <dd>Estende a regressão linear trocando termos lineares por funções suaves e flexíveis (aqui, P-splines) pra cada preditor (tempo, mês) — ajustado minimizando um critério penalizado (GCV — <em>Generalized Cross-Validation</em>) que controla o quanto a curva pode "ondular".</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#gam" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Mais uma família de método com extrapolação de longo prazo estruturalmente frágil — reforça a mensagem central de não confiar em nenhum modelo pontual isolado.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-46" target="_blank" rel="noopener noreferrer">D-46</a>.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/regressao-quantilica-tds.png" alt="Regressão quantílica: mediana vs picos vs mínimos">
+      <figcaption>Figura do artigo (resultados.tex, linha 489): "Regressão quantílica: mediana (Q50) vs. picos (Q90) vs. mínimos (Q10)."</figcaption>
+    </figure>
+    <div class="howto"><div class="step"><b>Regressão quantílica:</b> resultado na direção <strong>oposta</strong> à hipótese do projeto — o percentil 90 (picos) tem inclinação negativa e significativa (-3,05 mg/L/ano, p=0,026): os picos de TDS não sobem mais rápido que a mediana, caem. Como os 3 quantis são ajustados independentemente, a extrapolação chega a cruzar (Q90 previsto fica abaixo do Q50 em +20a) — limitação reportada, não escondida por reordenação artificial.</div></div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: regressão quantílica</summary>
+      <div class="body">
+        <dl>
+          <dt>Regressão quantílica</dt>
+          <dd>Em vez de modelar a média condicional (como OLS), modela diretamente um quantil específico (ex. o percentil 90) minimizando uma função de perda assimétrica (<em>pinball loss</em>) — cada quantil é ajustado de forma independente, sem garantia de que Q10≤Q50≤Q90 na extrapolação.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#regressao-quantilica" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Único resultado na direção oposta à hipótese central — registrado por honestidade metodológica, não descartado por não bater com a narrativa.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-47" target="_blank" rel="noopener noreferrer">D-47</a>.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/intervencao-arimax-tds.png" alt="ARIMAX com regressores de evento">
+      <figcaption>Figura do artigo (resultados.tex, linha 496): "ARIMAX com regressores de evento (seca 2012-2016, ordem de conservação de 2015)."</figcaption>
+    </figure>
+    <div class="howto"><div class="step"><b>Análise de intervenção:</b> controlando pelos dois eventos conhecidos, nenhum atinge significância isolada clara (seca: p=0,206; ordem de conservação: p=0,051, no limiar). A componente sazonal teve instabilidade de estimação (convergiu no limite do espaço admissível) — registrado como limitação técnica.</div></div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: intervenção/ARIMAX com eventos</summary>
+      <div class="body">
+        <dl>
+          <dt>Intervenção / ARIMAX com eventos</dt>
+          <dd>SARIMA estendido com regressores exógenos representando eventos específicos conhecidos — um pulso para a seca (2012-2016) e um degrau permanente para a ordem de conservação (2015) — testa se cada evento, isoladamente, explica um salto de nível, controlando pelo outro.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#intervencao-arimax" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Nenhum evento isolado "explica tudo" — consistente com a leitura de regime/ciclo (Lição 0003), não de choque único.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-48" target="_blank" rel="noopener noreferrer">D-48</a>.</p>
+  </aside>
+</div>
+
+<div class="figure-block">
+  <div class="figure-main">
+    <figure class="art">
+      <img src="../../../01_manuscrito/Artigo/images/modelos-fundacionais-tds.png" alt="Modelo fundacional zero-shot Chronos-Bolt-Small">
+      <figcaption>Figura do artigo (resultados.tex, linha 503): "Modelo fundacional zero-shot (Chronos-Bolt-Small) — sem treino nos dados do projeto."</figcaption>
+    </figure>
+    <div class="howto"><div class="step"><b>Modelo fundacional (Chronos-Bolt-Small):</b> confirmando a expectativa declarada <em>antes</em> de rodar, não supera o naive (MASE 0,59 vs. 0,44). Achado técnico extra: a largura do IC <strong>diminui</strong> com o horizonte (o oposto de todos os outros métodos) — comportamento conhecido de modelos de previsão direta/multi-horizonte, não um bug.</div></div>
+    <details class="method-card">
+      <summary>🔧 Como funciona: modelo fundacional (Chronos-Bolt)</summary>
+      <div class="body">
+        <dl>
+          <dt>Modelo fundacional zero-shot</dt>
+          <dd>Modelo de série temporal pré-treinado (Amazon, baseado em transformer) aplicado <em>zero-shot</em> — sem nenhum treino nos dados deste projeto, só recebe a série histórica como "prompt" e produz previsões de quantis diretamente.</dd>
+        </dl>
+        <p class="source">Mais detalhe: <a href="../reference/metodos-de-previsao.html#modelo-fundacional" target="_blank" rel="noopener noreferrer">ficha completa</a>.</p>
+      </div>
+    </details>
+  </div>
+  <aside class="decision-box">
+    <div class="label">O que isso significa pro projeto</div>
+    <p>Hipótese pré-registrada e confirmada (não supera naive) — exemplo de rigor: testar mesmo esperando um resultado negativo.</p>
+    <p class="afeta">Afeta: <a class="dcode" href="../reference/decisoes-citadas.html#D-49" target="_blank" rel="noopener noreferrer">D-49</a>.</p>
+  </aside>
+</div>
+
+<table class="adv">
+<tr><th>Método</th><th>Resultado em 1 frase</th></tr>
+<tr><td>Espaço de estados</td><td>Sem tendência variável genuína; IC mais largo de todos.</td></tr>
+<tr><td>GAM</td><td>Explode sem piso de suavização; com piso, prevê leve queda.</td></tr>
+<tr><td>Regressão quantílica</td><td>Picos (Q90) caem, não sobem — oposto à hipótese do projeto.</td></tr>
+<tr><td>ARIMAX intervenção</td><td>Nem seca nem ordem de conservação atingem significância isolada clara.</td></tr>
+<tr><td>Modelo fundacional (Chronos)</td><td>Não supera o naive, como esperado antes do teste.</td></tr>
+</table>
+
+<div class="quiz" data-quiz>
+  <div class="q">O que os 5 métodos complementares têm em comum na conclusão, apesar de abordagens distintas?</div>
+  <div class="opts">
+    <button class="opt" data-correct="false">Todos confirmam uma tendência de alta forte e sem ressalvas.</button>
+    <button class="opt" data-correct="true">Nenhum encontra tendência residual clara além do efeito de vazão.</button>
+    <button class="opt" data-correct="false">Todos superam facilmente o baseline naive em previsão de curto prazo.</button>
+    <button class="opt" data-correct="false">Todos recomendam abandonar os 3 finalistas já escolhidos no artigo.</button>
+  </div>
+  <div class="feedback"></div>
+</div>
+
+<details class="recall">
+  <summary>Recall sem olhar: a frase de síntese do artigo sobre os 5 métodos complementares.</summary>
+  <div class="answer">
+    <em>"Nenhum contradiz <a class="dcode" href="../reference/decisoes-citadas.html#D-14" target="_blank" rel="noopener noreferrer">D-14</a>/<a class="dcode" href="../reference/decisoes-citadas.html#D-37" target="_blank" rel="noopener noreferrer">D-37</a>/<a class="dcode" href="../reference/decisoes-citadas.html#D-39" target="_blank" rel="noopener noreferrer">D-39</a>/<a class="dcode" href="../reference/decisoes-citadas.html#D-40" target="_blank" rel="noopener noreferrer">D-40</a> — pelo contrário, reforçam de ângulos independentes que não há tendência residual clara além do efeito de vazão/regime, e que a extrapolação de longo prazo é estruturalmente frágil em múltiplas famílias de método (não só nas já conhecidas)."</em><br>
+    <span class="interp">É a mesma mensagem de fundo repetida de formas diferentes: convergência estatística real (Lições 0002-0004), mas fragilidade estrutural de qualquer extrapolação de longo prazo (Lições 0005-0007) — agora confirmada numa quinta, sexta e sétima família de método.</span>
+  </div>
+</details>
+
+<hr>
+
+<div class="ask-agent">
+  <strong>Ficou alguma dúvida?</strong> Pergunte ao agente (Claude Code) agora — ele pode detalhar qualquer um destes 9 métodos em profundidade se a banca pedir, explicar a diferença entre <a class="dcode" href="../reference/decisoes-citadas.html#D-56" target="_blank" rel="noopener noreferrer">D-56</a> e <a class="dcode" href="../reference/decisoes-citadas.html#D-57" target="_blank" rel="noopener noreferrer">D-57</a>, ou simular a pergunta "por que tantos métodos, se os 3 finalistas já bastam?" (resposta: é o critério de comparação por múltiplos métodos complementares definido desde a Metodologia, não acúmulo sem critério).
+</div>
+
+<nav class="lesson-nav">
+  <a href="0008-objetivos-secundarios.html" target="_blank" rel="noopener noreferrer">← 0008 — Objetivos secundários</a>
+  <span>Fim da jornada estruturada — volte ao <a href="0001-mapa-geral-do-projeto.html" target="_blank" rel="noopener noreferrer">mapa geral (0001)</a> para revisão rápida antes da banca.</span>
+</nav>
+
+<script>
+document.querySelectorAll('[data-quiz]').forEach(function(quiz) {
+  var feedback = quiz.querySelector('.feedback');
+  quiz.querySelectorAll('button.opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var correct = btn.getAttribute('data-correct') === 'true';
+      quiz.querySelectorAll('button.opt').forEach(function(b) { b.disabled = true; });
+      if (correct) {
+        btn.classList.add('correct');
+        feedback.textContent = 'Certo. Essa é a leitura que vai pra conclusão do artigo.';
+      } else {
+        btn.classList.add('wrong');
+        quiz.querySelector('[data-correct="true"]').classList.add('correct');
+        feedback.textContent = 'Não é essa — a opção em verde é a correta. Releia o parágrafo acima antes de seguir.';
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>

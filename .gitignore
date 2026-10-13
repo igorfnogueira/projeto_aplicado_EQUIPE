@@ -9,12 +9,6 @@ venv/
 # logs de execucao locais (saida de terminal, nao codigo/resultado)
 *_run.log
 
-# documentos locais -- nao fazem parte dos entregaveis publicos.
-# Foram removidos do historico publico via git filter-repo em 2026-09-17
-# e reunidos em docs_local/ em 2026-10-03:
-#   01_manuscrito, 02_governanca, 03_prompts, 04_literatura,
-#   05_relatorios_qualidade, 06_aula_e_apoio
-docs_local/
 .claude/
 
 # PDF solto na raiz fica de fora ate ser arquivado em docs_local/04_literatura
